@@ -1,13 +1,15 @@
 # sav
 Javascript library to read .sav data files.
 
-*This is my first Javascript project, and my first GitHub submit, so I don't know what I'm doing yet!*
+This is my first Javascript project, and I'm marking it BETA until the files are organized correctly. Everything is subject to change.
+
+Credits to [GNU PSPP](https://www.gnu.org/software/pspp/) for documenting most of the .sav file format. I reverse engineered a few missing specs, such as extreme length string vars.
 
 ## Motivation
 
-I'm experimenting with creation of a multi-platform desktop statistics tool using Electron. I need a way to read the records in a .sav file, so I can compute statistics on them.
-
-This library doesn't load all records into memory, since large files don't fit in memory. Opening a file will read only the metadata into memory. Then records are iterated through when requested. The file is kept open, and the record pointer can reset for another table scan if needed.
+I needed a way to analyze the records in a local .sav file, without opening the whole file into memory. The library only loads
+the metadata (see below) into memory. The records are enumerated upon request. If the file is kept open, the record pointer
+can be reset to the first record for another table scan if needed (excluding the need to re-parse the metadata).
 
 ## Metadata
 
@@ -80,6 +82,8 @@ Download from GitHub and put it somewhere.
 
 ## Example Usage
 
+See test.js for a working example, just in case there are typos here.
+
 ```javascript
 
 // import it
@@ -88,33 +92,51 @@ var SavReader = require('./SavReader')
 
 async function test1(){
 
-    var sav = new SavReader('testfile.sav')
+  var sav = new SavReader('testfile.sav')
 
-    // this opens the file and loads all metadata (but not the records a.k.a. cases)
-    await sav.open()
+  // this opens the file and loads all metadata (but not the records a.k.a. cases)
+  await sav.open()
 
-    // print the header, which contains number of cases, encoding, etc.
-    console.log(sav.meta.header)
-    
-    // print the vars
-    sav.meta.sysvars.map(v => {
+  // print the header, which contains number of cases, encoding, etc.
+  console.log(sav.meta.header)
 
-        // print the var, type, label and missing values specifications
-        console.log(v)
+  // print the vars
+  sav.meta.sysvars.map(v => {
 
-        // find and print value labels for this var if any
-        let valueLabels = sav.meta.getValueLabels(v.name)
-        if (valueLabels){
-            console.log(valueLabels)
-        }
+    // print the var, type, label and missing values specifications
+    console.log(v)
 
-    })
+    // find and print value labels for this var if any
+    let valueLabels = sav.meta.getValueLabels(v.name)
+    if (valueLabels){
+      console.log(valueLabels)
+    }
 
-    // enumerate records
-    // todo: work in progress
+  })
 
-    // reset record pointer for next scan
-    // todo
+  // object to collect test frequencies of variable Q1
+  var test_frequencies = {};
+
+  // row iteration (only one row is used at a time)
+  let row = null;
+  do{
+      row = await sav.readNextRow();
+      if( row != null ){
+
+          // print the row index and value of variable 'uuid' every 1000 records
+          if( row.index % 1000 === 0 ){
+              console.log(row.index, row.data['uuid']);
+          }
+
+          // collect frequencies of variable 'Q1'
+          if( row.data.Q1 != null ){
+              q1_frequencies[row.data.Q1] = (q1_frequencies[row.data.Q1] || 0) + 1;
+          }
+      }
+  } while( row != null );
+
+  // print the frequencies
+  console.log(q1_frequencies);
 
 }
 
