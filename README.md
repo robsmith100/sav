@@ -1,67 +1,70 @@
 # sav
 Javascript library to read .sav data files.
 
-This is my first javascript project, and my first GitHub submit, so i don't know what i'm doing yet.
+*This is my first Javascript project, and my first GitHub submit, so I don't know what I'm doing yet!*
 
-Upon opening a file, it reads the metadata into memory. Records are not immediately loaded into memory, becuase large files don't fit in memory.  Metadata contains the following:
+## Motivation
 
-#### Header
+I'm experimenting with creation of a multi-platform desktop statistics tool using Electron. I need a way to read the records in a .sav file, so I can compute statistics on them.
+
+This library doesn't load all records into memory, since large files don't fit in memory. Opening a file will read only the metadata into memory. Then records are iterated through when requested. The file is kept open, and the record pointer can reset for another table scan if needed.
+
+## Metadata
+
+### File Header
 
 Metadata contains a file header. Here's an example:
 
 ```javascript
 // meta.header
-{
-    product: '@(#) IBM SPSS STATISTICS 64-bit MS Windows 23.0.0.0',
-    layout_code: 2,
-    n_vars: 50,
-    n_cases: 21504,
-    weight: null,
-    compressed: true,
-    compressionBias: 100,
-    created: '2015-08-04 14:51:32z',
-    fileLabel: '',
-    encoding: 'UTF-8' 
+{ 
+  product: '@(#) IBM SPSS STATISTICS 64-bit MS Windows 23.0.0.0',
+  encoding: 'UTF-8',
+  created: '2015-08-24T20:51:32.000Z',
+  weight: null,
+  n_vars: 69,
+  n_cases: 21504,
+  compression: { bias: 100 } 
 }
 ```
 
-#### Variables & Value Labels
+### Variables & Value Labels
 
-Metadata contains variables and valuelabels:
+Metadata contains variables and value labels:
 
 ```javascript
 // example numeric var
 {
-    name: 'q1',
-    type: 'numeric',
-    label: 'Please specify your country of residence.',
-    missing: 999
-},
+  name: 'q1',
+  type: 'numeric',
+  label: 'Please specify your country of residence.',
+  missing: 999
+}
 
 // example numeric var with two missing values
 {
-    name: 'q2',
-    type: 'numeric',
-    label: 'What was your total household income last year in bitcoin?',
-    missing: { values: [98, 99] }
+  name: 'q2',
+  type: 'numeric',
+  label: 'What was your total household income last year in bitcoin?',
+  missing: { values: [98, 99] }
 }
 
 // example value labels for the above var
 [
-    { val: 1, label: "0฿ to 99฿" },
-    { val: 2, label: "100฿ to 499฿" },
-    { val: 3, label: "500฿ to 2,000฿" },
-    { val: 4, label: "2,000฿ or more" },
-    { val: 98, label: "Prefer not to answer" },
-    { val: 99, label: "Don't know" },
+  { val: 1, label: "0฿ to 99฿" },
+  { val: 2, label: "100฿ to 499฿" },
+  { val: 3, label: "500฿ to 2,000฿" },
+  { val: 4, label: "2,000฿ or more" },
+  { val: 98, label: "Prefer not to answer" },
+  { val: 99, label: "Don't know" },
 ]
 
 // example string var
 {
-    name: 'q2',
-    type: 'string',
-    len: 500,
-    label: 'In 500 characters or less, please describe what you liked best about the excursion?',
+  name: 'q2',
+  type: 'string',
+  len: 500,
+  label: 'In 500 characters or less, please describe what you liked best about the excursion?',
 }
 ```
 
@@ -87,7 +90,7 @@ async function test1(){
 
     var sav = new SavReader('testfile.sav')
 
-    // this opens the file and loads all metadata
+    // this opens the file and loads all metadata (but not the records a.k.a. cases)
     await sav.open()
 
     // print the header, which contains number of cases, encoding, etc.
@@ -106,6 +109,12 @@ async function test1(){
         }
 
     })
+
+    // enumerate records
+    // todo: work in progress
+
+    // reset record pointer for next scan
+    // todo
 
 }
 
