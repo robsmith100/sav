@@ -58,7 +58,7 @@ class AsyncReader{
               reject('stream is closed')
           }
 
-          var buf = this.readable.read(len);
+          let buf = this.readable.read(len);
           if (buf == null){
               
               // wait for more data to become available

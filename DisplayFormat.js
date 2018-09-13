@@ -62,7 +62,7 @@ class DisplayFormat{
 
     let ft = DisplayFormat.sys_formattype;
 
-    for( var property in ft ){
+    for( let property in ft ){
       if( ft.hasOwnProperty(property)){
         if( ft[property] == type ){
           typestr = property;

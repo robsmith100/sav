@@ -23,8 +23,8 @@ async function test1(){
     console.log(cc.FgMagenta + 'Variables:' + cc.Reset)
     sav.meta.sysvars.map(x => {
 
-        var namestr = `${cc.FgGreen}${x.name}`;
-        var typestr = `${cc.FgCyan}[${x.type}${(x.len != null ? cc.FgWhite + '(' + x.len + ')' : '')}`;
+        let namestr = `${cc.FgGreen}${x.name}`;
+        let typestr = `${cc.FgCyan}[${x.type}${(x.len != null ? cc.FgWhite + '(' + x.len + ')' : '')}`;
         typestr += cc.FgYellow + ' ' + x.printFormat.typestr + ',' + x.printFormat.width + ',' + x.printFormat.nbdec;
         typestr += cc.FgCyan + ']';
 
@@ -51,7 +51,7 @@ async function test1(){
     // scan
     console.log(cc.FgMagenta + 'Row Scanning:' + cc.Reset)
     let row = null;
-    var q1_frequencies = {};
+    let q1_frequencies = {};
     do{
         row = await sav.readNextRow();
 

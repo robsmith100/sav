@@ -92,7 +92,7 @@ var SavReader = require('./SavReader')
 
 async function test1(){
 
-  var sav = new SavReader('testfile.sav')
+  let sav = new SavReader('testfile.sav')
 
   // this opens the file and loads all metadata (but not the records a.k.a. cases)
   await sav.open()
