@@ -93,3 +93,8 @@ class SavReader{
 }
 
 module.exports = SavReader;
+exports.SavReader = SavReader;
+
+exports.printMsg = function() {
+  console.log("This is a test message from the package");
+}
