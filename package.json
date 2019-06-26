@@ -1,0 +1,26 @@
+{
+  "name": "sav-reader",
+  "version": "1.0.0",
+  "description": "Read .sav files (SPSS, PSPP), records and metadata.",
+  "main": "SavReader.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robsmith100/sav.git"
+  },
+  "keywords": [
+    "spss",
+    "sav"
+  ],
+  "author": "Rob Smith",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/robsmith100/sav/issues"
+  },
+  "homepage": "https://github.com/robsmith100/sav#readme"
+}
