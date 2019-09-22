@@ -18,7 +18,7 @@ async function test1(){
     // print the header
     console.log(cc.FgMagenta + 'File Header:' + cc.Reset)
     console.log(sav.meta.header);
-  
+    
     // print the vars
     console.log(cc.FgMagenta + 'Variables:' + cc.Reset)
     sav.meta.sysvars.map(x => {
