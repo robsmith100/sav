@@ -92,4 +92,5 @@ class SavReader{
 
 }
 
-module.exports = SavReader;
+//module.exports = SavReader;
+export default SavReader;
