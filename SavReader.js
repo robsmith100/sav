@@ -5,7 +5,7 @@ var Meta = require('./SavMeta');
 /** 
  * Read schema and records from .sav file
  */
-export class SavReader{
+class SavReader{
 
     constructor(fileName){
         this.fileName = fileName;
