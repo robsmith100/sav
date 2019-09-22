@@ -1,6 +1,6 @@
 {
   "name": "sav-reader",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Read .sav files (SPSS, PSPP), records and metadata.",
   "main": "SavReader.js",
   "directories": {
