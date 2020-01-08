@@ -21,7 +21,7 @@ class ValueLabelRecord{
 
             // get label
             let labelLen = await r.readByte();
-            let label = await r.readString(labelLen);
+            let label = labelLen > 0 ? await r.readString(labelLen) : "";
             if ((labelLen + 1) % 8 != 0) {
                 let padding = 8 - ((labelLen + 1) % 8);
                 await r.readString(padding);
