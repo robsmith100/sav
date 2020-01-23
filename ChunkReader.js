@@ -4,7 +4,7 @@ var PeekableAsyncReader = require('./PeekableAsyncReader')
 class ChunkReader{
 
     constructor(filename){
-        this.reader = new PeekableAsyncReader(filename);
+        this.reader = new PeekableAsyncReader(filename, 1048576);
         this.commandPointer = 0;
         this.commandBuffer = null;
     }
