@@ -1,7 +1,3 @@
-var fs = require('fs');
-//var RecordType = require('./RecordType');
-var ChunkReader = require('./ChunkReader');
-
 var HeaderRecord = require('./records/HeaderRecord');
 var VariableRecord = require('./records/VariableRecord');
 var ValueLabelRecord = require('./records/ValueLabelRecord');
@@ -29,9 +25,7 @@ class SavMetaLoader{
 
     constructor(chunkReader){
         this.reader = chunkReader;
-
         this.meta = new SavMeta();
-        
     }
 
     async load(){

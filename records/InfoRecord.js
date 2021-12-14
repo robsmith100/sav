@@ -78,7 +78,12 @@ class InfoRecord{
 
             // tab separated list of NAME=LONGNAME entries
             // i don't think these can contain crazy characters, so encoding shouldn't matter
-            let longVarNames = record.byteData.trimEnd(); // System.Text.ASCIIEncoding.UTF8.GetString(bytedata);
+            let byteDataStr = record.byteData;
+            if (typeof (byteDataStr) !== "string") {
+                byteDataStr = String.fromCharCode(...byteDataStr);
+            }
+            let longVarNames = byteDataStr.trimEnd(); // System.Text.ASCIIEncoding.UTF8.GetString(bytedata);
+            //let longVarNames = record.byteData.trimEnd(); // System.Text.ASCIIEncoding.UTF8.GetString(bytedata);
             //string longvarnames = System.Text.ASCIIEncoding.GetEncoding(1252).GetString(bytedata);
             delete(record.byteData);
 
@@ -119,7 +124,11 @@ class InfoRecord{
         }
         else if( subType == 20 ){
             record.subTypeStr = 'encoding record';
-            record.encoding = record.byteData.trimEnd();
+            let byteDataStr = record.byteData;
+            if (typeof (byteDataStr) !== "string") {
+                byteDataStr = String.fromCharCode(...byteDataStr);
+            }
+            record.encoding = byteDataStr.trimEnd();
 
             meta.header.encoding = record.encoding;
 
