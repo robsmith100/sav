@@ -14,6 +14,7 @@ String.prototype.trimEnd = String.prototype.trimEnd ? String.prototype.trimEnd :
 	}
 };
 
+const isValid = (x) => x !== null && x !== undefined;
 
 /** 
  * Read schema and records from .sav file
@@ -49,7 +50,7 @@ class SavReader{
     }
 
     /** Read the next row of data */
-    async readNextRow(){
+    async readNextRow(includeNulls = true){
 
         let r = this.reader;
 
@@ -79,7 +80,8 @@ class SavReader{
 
             if( v.type == 'numeric' ){
                 var d = await r.readDouble2(compression);
-                row.data[v.name] = d;
+                if( includeNulls || isValid(d))
+                    row.data[v.name] = d;
             }
             else if( v.type == 'string' ){
                 // read root
@@ -88,10 +90,12 @@ class SavReader{
                 // read string continuations if any
                 for( var j = 0; j < v.stringExt; j++ ){
                     str += await r.read8CharString(compression);
-
                 }
 
-                row.data[v.name] = str != null ? str.trimEnd() : null;
+                const strVal = str != null ? str.trimEnd() : null;
+                if (includeNulls || isValid(strVal)) {
+                    row.data[v.name] = strVal;
+                }
             }
 
 
