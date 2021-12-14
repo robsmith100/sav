@@ -198,7 +198,8 @@ class ChunkReader{
     }
     
 
-    async readString(len, trimEnd = false){
+    async readString(len, trimEnd = false) {
+        if (len < 1) return "";
         var buf = await this.reader.read(len);
         if( buf != null && buf.length == len ){
             return trimEnd ? buf.trimEnd() : buf;
