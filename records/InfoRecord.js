@@ -1,3 +1,12 @@
+function bytesToSring(bytes) {
+    let str = "";
+    for(let i = 0, n = bytes.length; i < n; i++) {
+        str += String.fromCharCode(bytes[i])
+    }
+    return str;
+}
+
+
 class InfoRecord{
 
     static async read(reader, meta){
@@ -80,7 +89,7 @@ class InfoRecord{
             // i don't think these can contain crazy characters, so encoding shouldn't matter
             let byteDataStr = record.byteData;
             if (typeof (byteDataStr) !== "string") {
-                byteDataStr = String.fromCharCode(...byteDataStr);
+                byteDataStr = bytesToSring(byteDataStr);
             }
             let longVarNames = byteDataStr.trimEnd(); // System.Text.ASCIIEncoding.UTF8.GetString(bytedata);
             //let longVarNames = record.byteData.trimEnd(); // System.Text.ASCIIEncoding.UTF8.GetString(bytedata);
@@ -126,7 +135,7 @@ class InfoRecord{
             record.subTypeStr = 'encoding record';
             let byteDataStr = record.byteData;
             if (typeof (byteDataStr) !== "string") {
-                byteDataStr = String.fromCharCode(...byteDataStr);
+                byteDataStr = bytesToSring(byteDataStr);
             }
             record.encoding = byteDataStr.trimEnd();
 
