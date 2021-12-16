@@ -10,8 +10,8 @@ class BufferChunkReader{
         this.commandBuffer = null;
     }
 
-    buffer;
-    bufferPos = 0;
+    //buffer;
+    //bufferPos = 0;
 
     async close(){
     }
