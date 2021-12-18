@@ -3,9 +3,12 @@
 /** There must be no more than one document record per system file. Document
     records must follow the variable records and precede the dictionary termination record.  
     */
-class DocumentRecord{
+export class DocumentRecord{
 
-    static async read(reader){
+    n_lines: number;
+    lines: string[];
+
+    static async read(reader): Promise<DocumentRecord>{
 
         // Number of lines of documents present.
         let n_lines = await reader.readInt32();
@@ -13,7 +16,7 @@ class DocumentRecord{
         // Document lines. The number of elements is defined by n_lines. Lines shorter than 80 characters are padded on the right with spaces. 
         let lines = [];
         for( let i = 0; i < n_lines; i++ ){
-            doc.lines.push(await r.readString(80, true));
+            lines.push(await reader.readString(80, true));
         }
 
         return {
@@ -25,4 +28,3 @@ class DocumentRecord{
 
 }
 
-module.exports = DocumentRecord;

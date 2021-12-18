@@ -1,95 +1,75 @@
-var PeekableAsyncReader = require('./PeekableAsyncReader')
+import { IPeekableAsyncReader } from "./IPeekableAsyncReader.js";
 
-class BufferChunkReader{
 
-    constructor(buffer) {
-        this.buffer = buffer;
-        this.bufferPos = 0;
+export class CommandReader {
 
+    reader: IPeekableAsyncReader;
+    commandPointer: number;
+    commandBuffer: Buffer;
+
+    constructor(reader: IPeekableAsyncReader) {
+        this.reader = reader;
         this.commandPointer = 0;
         this.commandBuffer = null;
     }
 
-    //buffer;
-    //bufferPos = 0;
+    close = (): void => this.reader.close();
+    
+    getPosition = (): number => this.reader.getPosition();
 
-    async close(){
-    }
-
-    getPosition(){
-        return this.bufferPos;
-    }
-
-    isAtEnd() {
-        return this.bufferPos === this.buffer.length;
-    }
-
-    async peek(len) {
-        return await this.read(len, true);
-    }
-
-    async peekByte() {
-        if (this.bufferPos < this.buffer.length) {
-            return this.buffer[this.bufferPos];
+    isAtEnd = (): boolean => this.reader.isAtEnd();
+    
+    peek = async (len: number): Promise<Buffer> => await this.reader.peek(len);
+    
+    async peekByte(): Promise<number> {
+        var buf = await this.reader.peek(1);
+        if (buf != null && buf.length === 1) {
+            return buf[0];
         }
-        else {
-            throw new Error("EOF");
-        }
+        return null;
     }
 
-    async peekInt(){
-        var buf = await this.peek(4);
-        if( buf != null && buf.length == 4 ){
+    async peekInt(): Promise<number> {
+        var buf = await this.reader.peek(4);
+        if (buf != null && buf.length === 4) {
             var result = (
                 (buf[0]) |
-                (buf[1] << 8) | 
-                (buf[2] << 16) | 
+                (buf[1] << 8) |
+                (buf[2] << 16) |
                 (buf[3] << 24));
             return result;
         }
         return null;
     }
 
-    async read(len, peekOnly = false) {
-        if (this.bufferPos + len > this.buffer.length) {
-            throw new Error("EOF");    
-        }
+    // async read(len): Promise<Buffer> {
+    //     return await this.reader.read(len);
+    // }
 
-        let bytes = [];
-        let i = 0;
-        while (i < len) {
-            bytes.push(this.buffer[this.bufferPos + i]);
-            i++;
-        }
-        if (!peekOnly) {
-            this.bufferPos += len; // advance buffer position
-        }
-        return bytes;
-    }
-
-    async readInt32(){
-        var buf = await this.read(4);
-        if( buf != null && buf.length == 4 ){
+    async readInt32(): Promise<number> {
+        var buf = await this.reader.read(4);
+        if (buf != null && buf.length === 4) {
             var result = (
                 (buf[0]) |
-                (buf[1] << 8) | 
-                (buf[2] << 16) | 
+                (buf[1] << 8) |
+                (buf[2] << 16) |
                 (buf[3] << 24));
             return result;
-
         }
         return null;
     }
 
-    async readByte() {
-        const byte = this.buffer[this.bufferPos];
-        this.bufferPos++;
-        return byte;
+    async readByte(): Promise<number> {
+        var buf = await this.reader.read(1);
+        if (buf != null && buf.length === 1) {
+            return buf[0];
+        }
+        return null;
     }
 
-    async readDouble(){
-        var buf = await this.read(8);
-        if( buf != null && buf.length == 8 ){
+    async readDouble(): Promise<number> {
+        var buf = await this.reader.read(8);
+        if (buf != null && buf.length === 8) {
             var ab = new ArrayBuffer(8);
             var bufView = new Uint8Array(ab);
             bufView[0] = buf[7];
@@ -101,17 +81,17 @@ class BufferChunkReader{
             bufView[6] = buf[1];
             bufView[7] = buf[0];
             let dv = new DataView(ab);
-            let d = dv.getFloat64();
+            let d = dv.getFloat64(0);
             return d;
         }
         return null;
     }
 
-    async getCommandCode(){
+    async getCommandCode(): Promise<number>{
 
         if (this.commandPointer == 0) {
             // read command bytes from buffer
-            this.commandBuffer = await this.read(8);
+            this.commandBuffer = await this.reader.read(8);
         }
 
         let code = this.commandBuffer[this.commandPointer];
@@ -123,7 +103,7 @@ class BufferChunkReader{
         return code;
     }
 
-    async readDouble2(compression){
+    async readDouble2(compression): Promise<number>{
         if (compression == null)
             return await this.readDouble();
 
@@ -167,9 +147,8 @@ class BufferChunkReader{
 
     }
 
-
-
-    async read8CharString(compression){
+    async read8CharString(compression): Promise<string>{
+        
         if (compression == null)
             return await this.readString(8);
         
@@ -177,7 +156,7 @@ class BufferChunkReader{
         while (code === 0)
             code = await this.getCommandCode();
 
-        let str = null;
+        let str: string = null;
 
         if (code > 0 && code < 252) {
             // compressed data
@@ -185,21 +164,21 @@ class BufferChunkReader{
 
             // shouldn't get here!
         }
-        else if (code == 252) {
+        else if (code === 252) {
             // end of file
         }
-        else if (code == 253) {
+        else if (code === 253) {
             // non-compressible piece, read from stream
             str = await this.readString(8); // reads from end (since commands have already been read)
         }
-        else if (code == 254) {
+        else if (code === 254) {
             // string value that is all spaces
             str = '        '; // todo: figure out if this should be empty (len=0)
         }
-        else if (code == 255) {
+        else if (code === 255) {
             // system-missing
         }
-        else if (code == 0) {
+        else if (code === 0) {
             // ignore
         }
         else {
@@ -211,19 +190,24 @@ class BufferChunkReader{
     }
     
 
-    async readString(len, trimEnd = false) {
+    /**
+     * WHAT ENCODING TO USE?
+     */
+    async readString(len, trimEnd = false) : Promise<string> {
         if (len < 1) return "";
-        const buf = await this.read(len);
-        if (buf != null && buf.length == len) {
-            const strBuf = buf.map(b => String.fromCharCode(b)).join("");
+        var buf = await this.reader.read(len);
+        if (buf != null && buf.length === len) {
+            const strBuf = buf.toString()
             return trimEnd ? strBuf.trimEnd() : strBuf;
         }
     }
 
-    async readBytes(len){
-        return this.read(len);
+    async readBytes(len) : Promise<Buffer>{
+        var buf = await this.reader.read(len);
+        if( buf != null && buf.length === len ){
+            return buf;
+        }
     }
 
 }
 
-module.exports = BufferChunkReader;

@@ -1,45 +1,41 @@
-var ChunkReader = require('./ChunkReader');
-var Meta = require('./SavMeta');
-
-
-// trimend polyfill hack
-String.prototype.trimEnd = String.prototype.trimEnd ? String.prototype.trimEnd : function() {
-	if(String.prototype.trimRight) {
-		return this.trimRight();
-	} else if(String.prototype.trim) {
-		var trimmed = this.trim();
-		var indexOfWord = this.indexOf(trimmed);
-		
-		return this.slice(indexOfWord, this.length);
-	}
-};
+import * as stream from "stream";
+import { AsyncChunkReader } from "./internal-readers/AsyncChunkReader.js";
+import { AsyncReader } from "./internal-readers/AsyncReader.js";
+import { CommandReader } from "./internal-readers/CommandReader.js";
+import { SavMeta } from "./SavMeta.js";
+import { SavMetaLoader } from "./SavMetaLoader.js";
+import { SysVarType } from "./SysVar.js";
 
 const isValid = (x) => x !== null && x !== undefined;
 
 /** 
- * Read schema and records from .sav file
+ * Reads schema and records from .sav file
  */
-class SavReader{
+export class SavReader{
 
-    constructor(fileName){
-        this.fileName = fileName;
+    filename: string;
+    reader: CommandReader;
+    meta: SavMeta;
+    rowIndex: number;
+
+    constructor(readable: stream.Readable){
+        const r1 = new AsyncReader(readable);
+        const r2 = new AsyncChunkReader(r1, 1024); // 1 kb
+        this.reader = new CommandReader(r2);
     }
 
-    /** Opens the file and loads all metadata (var names, labels, valuelabels, etc). Doesn't load any records */
-    async open(){
-
-        this.reader = new ChunkReader(this.fileName);
-        //await this.reader.open();
-
+    /**
+     * Opens the file and loads all metadata (var names, labels, valuelabels, etc). Doesn't load any records.
+     */
+    async open() {
+        
         // check file type
-        if( await this.reader.readString(4) != "$FL2" ){
+        if (await this.reader.readString(4) != "$FL2") {
             throw new Error("Not a valid .sav file");
         }
 
         // load metadata (variable names, # of cases (if specified), variable labels, value labels, etc.)
-        let metaLoader = new Meta.SavMetaLoader(this.reader);
-        await metaLoader.load();
-        this.meta = metaLoader.meta;
+        this.meta = await SavMetaLoader.readMeta(this.reader);
 
         this.rowIndex = 0;
         
@@ -78,17 +74,17 @@ class SavReader{
         for( var i in this.meta.sysvars ){
             var v = this.meta.sysvars[i];
 
-            if( v.type == 'numeric' ){
+            if( v.type === SysVarType.numeric ){
                 var d = await r.readDouble2(compression);
                 if( includeNulls || isValid(d))
                     row.data[v.name] = d;
             }
-            else if( v.type == 'string' ){
+            else if( v.type === SysVarType.string ){
                 // read root
                 let str = await r.read8CharString(compression);
 
                 // read string continuations if any
-                for( var j = 0; j < v.stringExt; j++ ){
+                for( var j = 0; j < v.__nb_string_contin_recs; j++ ){
                     str += await r.read8CharString(compression);
                 }
 
@@ -109,4 +105,4 @@ class SavReader{
 
 }
 
-module.exports = SavReader;
+

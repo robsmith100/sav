@@ -1,4 +1,4 @@
-var SavReader = require('./SavReader');
+import { SavFileReader } from "./SavFileReader.js";
 
 // console coloring constants
 const cc = {
@@ -7,13 +7,15 @@ const cc = {
     BgBlack: "\x1b[40m", BgRed: "\x1b[41m", BgGreen: "\x1b[42m", BgYellow: "\x1b[43m", BgBlue: "\x1b[44m", BgMagenta: "\x1b[45m", BgCyan: "\x1b[46m", BgWhite:"\x1b[47m",
 }
 
-const filename = "../test-data/generic dataset 6.sav";
+const filename = "./test-data/generic dataset 6.sav";
 
 
 async function test1(){
 
-    var sav = new SavReader(filename);
+    var sav = new SavFileReader(filename);
     await sav.open();
+
+    
 
     // print the header
     console.log(cc.FgMagenta + 'File Header:' + cc.Reset)

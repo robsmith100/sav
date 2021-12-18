@@ -4,7 +4,10 @@
         "outDir": "dist",
         "allowJs": true,
         "target": "es6",
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "sourceMap": true
     },
     "include": ["./src/**/*"]
 }

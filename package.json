@@ -3,12 +3,14 @@
   "version": "1.0.11",
   "description": "Read .sav files (SPSS, PSPP), records and metadata.",
   "main": "dist/index.js",
-  "files": ["dist"],
+  "type": "module",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test1": "node dist/test.js",
-    "test2": "node dist/test_buf.js",
+    "test1": "tsc && node dist/test1.js",
+    "test2": "tsc && node dist/test2.js",
     "build": "tsc"
-
   },
   "repository": {
     "type": "git",
@@ -26,6 +28,7 @@
   "homepage": "https://github.com/robsmith100/sav#readme",
   "dependencies": {},
   "devDependencies": {
+    "@types/node": "^17.0.0",
     "typescript": "^4.5.4"
   }
 }
