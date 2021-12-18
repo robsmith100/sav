@@ -107,6 +107,8 @@ export class InfoRecord{
         }
         else if( rec.subType === InfoRecordSubType.SuperLongStringVariablesRecord ){
             
+            // TODO: port this over from my C# lib
+
             // this records helps piece together string variables that were separated
             // because their content was > 255 or some long length
             // because old SPSS files couldn't support the super long length
@@ -123,7 +125,6 @@ export class InfoRecord{
             // string str1 = System.Text.ASCIIEncoding.UTF8.GetString(bytedata);
             // xlong_string_map = str1;
 
-            // TODO!
 
             return rec;
         }
