@@ -12,11 +12,10 @@ const filename = "./test-data/generic dataset 6.sav";
 
 async function test1(){
 
-    var sav = new SavFileReader(filename);
+    const sav = new SavFileReader(filename);
     await sav.open();
 
     
-
     // print the header
     console.log(cc.FgMagenta + 'File Header:' + cc.Reset)
     console.log(sav.meta.header);
@@ -32,23 +31,24 @@ async function test1(){
 
         console.log(`${namestr} ${typestr} ${cc.Reset}${x.label}` );
         
-        // let vl = sav.meta.getValueLabels(x.name);
-        // if( vl ){
-        //     console.log(vl);
-        // }
+        // find and print value labels for this var if any
+        let valueLabels = sav.meta.getValueLabels(x.name)
+        if (valueLabels){
+            console.log(valueLabels)
+        }
 
     });
 
-    // print the value labels
-    console.log(cc.FgMagenta + 'Value Labels:' + cc.Reset)
-    sav.meta.valueLabels.map(vl => {
-        console.log(vl);
-    })
+    // // print the value labels
+    // console.log(cc.FgMagenta + 'Value Labels:' + cc.Reset)
+    // sav.meta.valueLabels.map(vl => {
+    //     console.log(vl);
+    // })
 
 
     // position of first record
     console.log('firstRecordPosition:', sav.meta.firstRecordPosition);
-
+    
 
     // scan
     console.log(cc.FgMagenta + 'Row Scanning:' + cc.Reset)
