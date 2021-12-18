@@ -1,7 +1,5 @@
-const SavReader = require('./SavReader');
-const SavBufferReader = require('./SavBufferReader');
+import { SavBufferReader as _SavBufferReader } from "./SavBufferReader.js";
+import { SavFileReader as _SavFileReader } from "./SavFileReader.js";
 
-module.exports = {
-    SavReader,
-    SavBufferReader
-};
+export const SavBufferReader = _SavBufferReader;
+export const SavFileReader = _SavFileReader;
