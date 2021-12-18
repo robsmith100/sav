@@ -13,10 +13,6 @@ can be reset to the first record for another table scan if needed (excluding the
 
 Actually then later I wanted to use this in a node express api, where the file was posted and loaded into memory as a Buffer. So then I added the SavBufferReader.
 
-## Performance
-
-This is performing significantly slower than the C# source lib I ported it from, so there's room for improvement.
-
 ## Metadata
 
 ### File Header
