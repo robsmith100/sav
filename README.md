@@ -91,10 +91,10 @@ See test.js for a working example, just in case there are typos here.
 
 ```javascript
 
-import { SavFileReader } from "./sav-reader";
+import { SavFileReader } from "sav-reader";
 
 // note: there's a SavBufferReader you can use if you already have the file read into memory
-// import { SavBufferReader } from "./sav-reader";
+// import { SavBufferReader } from "sav-reader";
 
 async function test1(){
 
@@ -103,14 +103,14 @@ async function test1(){
     // alternative:
     // const sav = new SavBufferReader(myBuf); // where myBuf is a Buffer
 
-    // this opens the file and loads all metadata (but not the records a.k.a. cases)
+    // this opens the file and loads all metadata (but not the data records)
     await sav.open()
 
     // print the header, which contains number of cases, encoding, etc.
     console.log(sav.meta.header)
 
     // print the vars
-    sav.meta.sysvars.map(v => {
+    sav.meta.sysvars.forEach(v => {
 
         // print the var, type, label and missing values specifications
         console.log(v)
