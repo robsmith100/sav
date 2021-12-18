@@ -11,6 +11,12 @@ I needed a way to analyze the records in a local .sav file, without opening the 
 the metadata (see below) into memory. The records are enumerated upon request. If the file is kept open, the record pointer
 can be reset to the first record for another table scan if needed (excluding the need to re-parse the metadata).
 
+Actually then later I wanted to use this in a node express api, where the file was posted and loaded into memory as a Buffer. So then I added the SavBufferReader.
+
+## Performance
+
+This is performing significantly slower than the C# source lib I ported it from, so there's room for improvement.
+
 ## Metadata
 
 ### File Header
