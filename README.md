@@ -1,7 +1,7 @@
 # sav
 Javascript library to read .sav data files.
 
-This is my first Javascript project, and I'm marking it BETA until the files are organized correctly. Everything is subject to change.
+This is my first Javascript project, first npm project, first typescript package, etc. So take that fwiw.
 
 Credits to [GNU PSPP](https://www.gnu.org/software/pspp/) for documenting most of the .sav file format. I reverse engineered a few missing specs, such as extreme length string vars.
 
@@ -73,12 +73,17 @@ Metadata contains variables and value labels:
 
 # Getting Started
 
-Hi mom.
-
-
 ## Installation
 
-Download from GitHub and put it somewhere.
+
+```
+npm i sav-reader
+
+or
+
+yarn add sav-reader
+```
+
 
 ## Example Usage
 
@@ -86,36 +91,40 @@ See test.js for a working example, just in case there are typos here.
 
 ```javascript
 
-// import it
-var SavReader = require('./SavReader')
+import { SavFileReader } from "./sav-reader";
 
+// note: there's a SavBufferReader you can use if you already have the file read into memory
+// import { SavBufferReader } from "./sav-reader";
 
 async function test1(){
 
-  let sav = new SavReader('testfile.sav')
+    const sav = new SavFileReader(filename);
 
-  // this opens the file and loads all metadata (but not the records a.k.a. cases)
-  await sav.open()
+    // alternative:
+    // const sav = new SavBufferReader(myBuf); // where myBuf is a Buffer
 
-  // print the header, which contains number of cases, encoding, etc.
-  console.log(sav.meta.header)
+    // this opens the file and loads all metadata (but not the records a.k.a. cases)
+    await sav.open()
 
-  // print the vars
-  sav.meta.sysvars.map(v => {
+    // print the header, which contains number of cases, encoding, etc.
+    console.log(sav.meta.header)
 
-    // print the var, type, label and missing values specifications
-    console.log(v)
+    // print the vars
+    sav.meta.sysvars.map(v => {
 
-    // find and print value labels for this var if any
-    let valueLabels = sav.meta.getValueLabels(v.name)
-    if (valueLabels){
-      console.log(valueLabels)
-    }
+        // print the var, type, label and missing values specifications
+        console.log(v)
 
-  })
+        // find and print value labels for this var if any
+        const valueLabels = sav.meta.getValueLabels(v.name)
+        if (valueLabels){
+            console.log(valueLabels)
+        }
+
+    })
 
   // object to collect test frequencies of variable Q1
-  var test_frequencies = {};
+  let test_frequencies = {};
 
   // row iteration (only one row is used at a time)
   let row = null;
