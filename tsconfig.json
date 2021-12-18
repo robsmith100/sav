@@ -3,11 +3,13 @@
         "rootDir": "./src/",
         "outDir": "dist",
         "allowJs": true,
-        "target": "es6",
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
-        "sourceMap": true
+        "sourceMap": true,
+        "module": "commonjs",
+        "target": "es2015"
+        //"target": "es6",
     },
     "include": ["./src/**/*"]
 }

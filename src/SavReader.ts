@@ -13,7 +13,6 @@ const isValid = (x) => x !== null && x !== undefined;
  */
 export class SavReader{
 
-    filename: string;
     reader: CommandReader;
     meta: SavMeta;
     rowIndex: number;
