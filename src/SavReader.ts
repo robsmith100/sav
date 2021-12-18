@@ -46,7 +46,7 @@ export class SavReader{
     }
 
     /** Read the next row of data */
-    async readNextRow(includeNulls = true){
+    async readNextRow(includeNulls = false){
 
         let r = this.reader;
 
@@ -58,10 +58,10 @@ export class SavReader{
 
         let compression = this.meta.header.compression;
 
-
         // check for eof
-        try{
-             await r.peekByte();
+        try {
+            // todo: might want to check for an EOF char or something rather than just planning on this throwing an error
+            await r.peekByte(); 
         }
         catch(err){
             var atEnd = r.isAtEnd();

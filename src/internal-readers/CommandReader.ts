@@ -23,68 +23,55 @@ export class CommandReader {
     
     async peekByte(): Promise<number> {
         var buf = await this.reader.peek(1);
-        if (buf != null && buf.length === 1) {
-            return buf[0];
-        }
-        return null;
+        if (buf.length !== 1) throw Error("not enough bytes read to peek a Byte");
+        return buf[0];
     }
 
     async peekInt(): Promise<number> {
         var buf = await this.reader.peek(4);
-        if (buf != null && buf.length === 4) {
-            var result = (
-                (buf[0]) |
-                (buf[1] << 8) |
-                (buf[2] << 16) |
-                (buf[3] << 24));
-            return result;
-        }
-        return null;
+        if (buf.length !== 4) throw Error("not enough bytes read to peek an Int32");
+        return (
+            (buf[0]) |
+            (buf[1] << 8) |
+            (buf[2] << 16) |
+            (buf[3] << 24));
+        
     }
-
-    // async read(len): Promise<Buffer> {
-    //     return await this.reader.read(len);
-    // }
 
     async readInt32(): Promise<number> {
         var buf = await this.reader.read(4);
-        if (buf != null && buf.length === 4) {
-            var result = (
-                (buf[0]) |
-                (buf[1] << 8) |
-                (buf[2] << 16) |
-                (buf[3] << 24));
-            return result;
-        }
-        return null;
+        if (buf.length !== 4) throw Error("not enough bytes read for Int32");
+        return (
+            (buf[0]) |
+            (buf[1] << 8) |
+            (buf[2] << 16) |
+            (buf[3] << 24));
     }
 
     async readByte(): Promise<number> {
         var buf = await this.reader.read(1);
-        if (buf != null && buf.length === 1) {
-            return buf[0];
-        }
-        return null;
+        if (buf.length !== 1) throw Error("not enough bytes read for Byte");
+        return buf[0];
     }
 
     async readDouble(): Promise<number> {
         var buf = await this.reader.read(8);
-        if (buf != null && buf.length === 8) {
-            var ab = new ArrayBuffer(8);
-            var bufView = new Uint8Array(ab);
-            bufView[0] = buf[7];
-            bufView[1] = buf[6];
-            bufView[2] = buf[5];
-            bufView[3] = buf[4];
-            bufView[4] = buf[3];
-            bufView[5] = buf[2];
-            bufView[6] = buf[1];
-            bufView[7] = buf[0];
-            let dv = new DataView(ab);
-            let d = dv.getFloat64(0);
-            return d;
-        }
-        return null;
+        if (buf.length !== 8) throw Error("not enough bytes read for Double");
+        
+        var ab = new ArrayBuffer(8);
+        var bufView = new Uint8Array(ab);
+        bufView[0] = buf[7];
+        bufView[1] = buf[6];
+        bufView[2] = buf[5];
+        bufView[3] = buf[4];
+        bufView[4] = buf[3];
+        bufView[5] = buf[2];
+        bufView[6] = buf[1];
+        bufView[7] = buf[0];
+        let dv = new DataView(ab);
+        let d = dv.getFloat64(0);
+        return d;
+    
     }
 
     async getCommandCode(): Promise<number>{
@@ -92,6 +79,7 @@ export class CommandReader {
         if (this.commandPointer == 0) {
             // read command bytes from buffer
             this.commandBuffer = await this.reader.read(8);
+            if (this.commandBuffer.length !== 8) throw Error("not enough bytes read for command");
         }
 
         let code = this.commandBuffer[this.commandPointer];
@@ -140,7 +128,7 @@ export class CommandReader {
             // ignore
         }
         else {
-            throw new Error('unknown error reading compressed double');
+            throw new Error('unknown error reading compressed double. code is ' + code);
         }
 
         return d;
@@ -196,17 +184,15 @@ export class CommandReader {
     async readString(len, trimEnd = false) : Promise<string> {
         if (len < 1) return "";
         var buf = await this.reader.read(len);
-        if (buf != null && buf.length === len) {
-            const strBuf = buf.toString()
-            return trimEnd ? strBuf.trimEnd() : strBuf;
-        }
+        if (buf.length !== len) throw Error("not enough bytes read for string of length " + len);
+        const strBuf = buf.toString()
+        return trimEnd ? strBuf.trimEnd() : strBuf;
     }
 
     async readBytes(len) : Promise<Buffer>{
         var buf = await this.reader.read(len);
-        if( buf != null && buf.length === len ){
-            return buf;
-        }
+        if (buf.length !== len) throw Error("not enough bytes read for Byte array of length " + len);
+        return buf;
     }
 
 }
