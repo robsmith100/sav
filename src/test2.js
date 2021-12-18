@@ -1,5 +1,5 @@
-var SavBufferReader = require('./SavBufferReader');
-var fs = require('fs');
+import { SavBufferReader } from './SavBufferReader.js';
+import * as fs from "fs";
 
 // console coloring constants
 const cc = {
@@ -14,14 +14,10 @@ function stream2buffer(stream) {
         stream.on("data", (chunk) => _buf.push(chunk));
         stream.on("end", () => resolve(Buffer.concat(_buf)));
         stream.on("error", (err) => reject(err));
-
     });
 } 
 
-
-const filename = "test-data/generic dataset 6.sav";
-
-
+const filename = "./test-data/generic dataset 6.sav";
 
 async function test_buf() {
     
@@ -47,24 +43,9 @@ async function test_buf() {
 
         console.log(`${namestr} ${typestr} ${cc.Reset}${x.label}` );
         
-        // let vl = sav.meta.getValueLabels(x.name);
-        // if( vl ){
-        //     console.log(vl);
-        // }
-
     });
 
     
-
-    // print the value labels
-    console.log(cc.FgMagenta + 'Value Labels:' + cc.Reset)
-    sav.meta.valueLabels.map(vl => {
-        console.log(vl);
-    })
-
-    
-
-
     // position of first record
     console.log('firstRecordPosition:', sav.meta.firstRecordPosition);
 
@@ -87,8 +68,6 @@ async function test_buf() {
                 q1_frequencies[row.data.Q1] = (q1_frequencies[row.data.Q1] || 0) + 1;
             }
         }
-
-        //console.log(row);
         
     } while( row != null );
 
@@ -99,8 +78,5 @@ async function test_buf() {
 }
 
 test_buf()
-    // .catch((err) => {
-    //     console.error(cc.FgRed + 'error: ' + cc.Reset + err)
-    // });
 
 

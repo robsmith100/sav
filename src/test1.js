@@ -9,12 +9,11 @@ const cc = {
 
 const filename = "./test-data/generic dataset 6.sav";
 
-
-async function test1(){
-
+async function test1() {
+    
     const sav = new SavFileReader(filename);
-    await sav.open();
 
+    await sav.open();
     
     // print the header
     console.log(cc.FgMagenta + 'File Header:' + cc.Reset)
@@ -39,16 +38,8 @@ async function test1(){
 
     });
 
-    // // print the value labels
-    // console.log(cc.FgMagenta + 'Value Labels:' + cc.Reset)
-    // sav.meta.valueLabels.map(vl => {
-    //     console.log(vl);
-    // })
-
-
     // position of first record
     console.log('firstRecordPosition:', sav.meta.firstRecordPosition);
-    
 
     // scan
     console.log(cc.FgMagenta + 'Row Scanning:' + cc.Reset)
@@ -66,8 +57,6 @@ async function test1(){
                 q1_frequencies[row.data.Q1] = (q1_frequencies[row.data.Q1] || 0) + 1;
             }
         }
-
-        //console.log(row);
         
     } while( row != null );
 

@@ -80,16 +80,12 @@ Metadata contains variables and value labels:
 
 ```
 npm i sav-reader
-
-or
-
-yarn add sav-reader
 ```
 
 
 ## Example Usage
 
-See test.js for a working example, just in case there are typos here.
+See src/test1.js for a working example, just in case there are typos here. You'll need to bring your own .sav file.
 
 ```javascript
 
