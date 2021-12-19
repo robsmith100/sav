@@ -5,11 +5,9 @@ Credits to [GNU PSPP](https://www.gnu.org/software/pspp/) for documenting most o
 
 ## Motivation
 
-I needed a way to analyze the records in a local .sav file, without opening the whole file into memory. The library only loads
-the metadata (see below) into memory. The records are enumerated upon request. If the file is kept open, the record pointer
-can be reset to the first record for another table scan if needed (excluding the need to re-parse the metadata).
+I needed a way to analyze the records in a local .sav file, without opening the whole file into memory. The library first only loads the metadata (see below) into memory. The records are then enumerated upon request. If the file is kept open, the record pointer can be reset to the first record for another table scan if needed (excluding the need to re-parse the metadata).
 
-Actually then later I wanted to use this in a node express api, where the file was posted and loaded into memory as a Buffer. So then I added the SavBufferReader.
+I also wanted to use this in a node express api, where the file was posted and loaded into memory as a Buffer. So I added the SavBufferReader.
 
 ## Metadata
 
@@ -87,7 +85,7 @@ See src/test1.js for a working example, just in case there are typos here. You'l
 
 ```javascript
 
-import { SavFileReader } from "sav-reader";
+import { SavFileReader } from "sav-reader"; // import the commonjs module
 
 // note: there's a SavBufferReader you can use if you already have the file read into memory
 // import { SavBufferReader } from "sav-reader";
