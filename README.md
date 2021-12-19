@@ -1,7 +1,5 @@
-# sav
+# sav-reader
 Javascript library to read .sav data files.
-
-This is my first Javascript project, first npm project, first typescript package, etc. So take that fwiw.
 
 Credits to [GNU PSPP](https://www.gnu.org/software/pspp/) for documenting most of the .sav file format. I reverse engineered a few missing specs, such as extreme length string vars.
 
