@@ -1,6 +1,9 @@
 import { InfoRecordSubType } from "./RecordType.js";
 
-function bytesToSring(bytes) {
+/**
+ * Should this offer an encoding?
+ */
+function bytesToString(bytes) {
     let str = "";
     for(let i = 0, n = bytes.length; i < n; i++) {
         str += String.fromCharCode(bytes[i])
@@ -80,7 +83,7 @@ export class InfoRecord{
             // i don't think these can contain crazy characters, so encoding shouldn't matter (uh, it would matter: todo)
             let byteDataStr = byteData;
             if (typeof (byteDataStr) !== "string") {
-                byteDataStr = bytesToSring(byteDataStr);
+                byteDataStr = bytesToString(byteDataStr);
             }
             let longVarNames = byteDataStr.trimEnd(); // System.Text.ASCIIEncoding.UTF8.GetString(bytedata);
             //let longVarNames = record.byteData.trimEnd(); // System.Text.ASCIIEncoding.UTF8.GetString(bytedata);
@@ -132,7 +135,7 @@ export class InfoRecord{
             
             let byteDataStr = byteData;
             if (typeof (byteDataStr) !== "string") {
-                byteDataStr = bytesToSring(byteDataStr);
+                byteDataStr = bytesToString(byteDataStr);
             }
             
             const enc_rec: EncodingInfoRecord = {

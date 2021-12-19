@@ -33,7 +33,7 @@ export class SavMetaLoader{
         let done = false;
         do{
 
-            let rec_type = await reader.peekInt();
+            const rec_type = await reader.peekInt();
 
             if( rec_type === RecordType.VariableRecord ){
                 
@@ -61,7 +61,7 @@ export class SavMetaLoader{
                 await reader.readInt32(); // consume peeked record type
 
                 // a value label record contains one set of value/label pairs and is attached to one or more variables
-                let set = await ValueLabelRecord.read(reader, vrecs); // TODO: make sure these guys are matched app (see appliesTo aka appliesToShortName)
+                const set = await ValueLabelRecord.read(reader, vrecs); // TODO: make sure these guys are matched app (see appliesTo aka appliesToShortName)
                 if( set != null ){
                     meta.valueLabels.push(set);
                 }
@@ -92,7 +92,6 @@ export class SavMetaLoader{
                 else if (rec.subType === InfoRecordSubType.LongVariableNamesRecord) {
                     // grab long names from it
                     longVariableNamesMap = (rec as LongVarNamesInfoRecord).longNameMap;
-
                 }
 
             }
@@ -126,7 +125,7 @@ export class SavMetaLoader{
             const weight_shortName = weight_vrec.shortName;
             meta.header.weight = meta.sysvars.find(sysvar => sysvar.name === weight_shortName);
         }
-        delete(meta.header.weightIndex); // ?? FIX ME (eh, it's probably okay)
+        delete(meta.header.weightIndex); // (don't want weightIndex to confuse anyone since it's an index into vrecs, not sysvars)
 
         // assign long variable names
         if (longVariableNamesMap) {
@@ -139,7 +138,7 @@ export class SavMetaLoader{
         }
 
         meta.header.n_vars = meta.sysvars.length;
-        delete(meta.header.case_size); // ??? why? ohhhh because that's the number of vrecs
+        delete(meta.header.case_size); // (dont want to confuse anyone because it's the number of vrecs, not sysvars)
 
         // // adjust valuelabels map to refer to new names
         // this.meta.valueLabels = this.meta.valueLabels.map(set => {
@@ -147,7 +146,6 @@ export class SavMetaLoader{
         //     set2.appliesToShortNames = set2.appliesToShortNames.map(shortname => this.meta.sysvars.find(sysvar => sysvar.shortName == shortname).name);
         //     return set2;
         // });
-
         
         return meta;
 
