@@ -47,44 +47,39 @@ export class SavReader{
     /** Read the next row of data */
     async readNextRow(includeNulls = false){
 
-        let r = this.reader;
-
-        var row = {
+        let row = {
             data: {},
             index: this.rowIndex
         };
 
-
-        let compression = this.meta.header.compression;
+        const compression = this.meta.header.compression;
 
         // check for eof
         try {
             // todo: might want to check for an EOF char or something rather than just planning on this throwing an error
-            await r.peekByte(); 
+            await this.reader.peekByte(); 
         }
         catch(err){
-            var atEnd = r.isAtEnd();
-            if( !atEnd ){
+            if( !this.reader.isAtEnd() ){
                 throw Error(err);
             }
             return null;
         }
 
-        for( var i in this.meta.sysvars ){
-            var v = this.meta.sysvars[i];
+        for( let v of this.meta.sysvars ){
 
             if( v.type === SysVarType.numeric ){
-                var d = await r.readDouble2(compression);
+                const d = await this.reader.readDouble2(compression);
                 if( includeNulls || isValid(d))
                     row.data[v.name] = d;
             }
             else if( v.type === SysVarType.string ){
                 // read root
-                let str = await r.read8CharString(compression);
+                let str = await this.reader.read8CharString(compression);
 
                 // read string continuations if any
                 for( var j = 0; j < v.__nb_string_contin_recs; j++ ){
-                    str += await r.read8CharString(compression);
+                    str += await this.reader.read8CharString(compression);
                 }
 
                 const strVal = str != null ? str.trimEnd() : null;

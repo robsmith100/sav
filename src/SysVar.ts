@@ -20,7 +20,7 @@ export class SysVar{
     missing: any;
 
     /**
-     * For internal use when reading data
+     * For internal use when reading data. Should probably find a better way to approach this.
      */
     __nb_string_contin_recs: number;
     
