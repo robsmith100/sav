@@ -14,9 +14,9 @@ const isValid = d => d !== null && d !== undefined;
 
 const eq = (d1: number, d2: number, nbdecs: number) => {
     const scale = 10 * nbdecs;
-    const rd1 = Math.round(d1 * scale) / scale;
-    const rd2 = Math.round(d2 * scale) / scale;
-    return rd1 === rd2;
+    const rounded_d1 = Math.round(d1 * scale) / scale;
+    const rounded_d2 = Math.round(d2 * scale) / scale;
+    return rounded_d1 === rounded_d2;
 }
 
 const computeDescriptives = (rows, field) => {
@@ -43,27 +43,6 @@ const computeDescriptives = (rows, field) => {
         mean: acc.valid > 0 ? acc.sum / acc.valid : null,
         min: acc.min,
         max: acc.max,
-        n: acc.valid
-    }
-}
-
-const computeRange = (rows, field) => {
-    const acc = rows.reduce(
-        (a, r) => {
-            if (isValid(r[field])) {
-                a.sum += r[field];
-                a.valid++;
-            }
-            return a;
-        },
-        {
-            min: 0,
-            max: 0,
-            valid: 0
-        }
-    );
-    return {
-        avg: acc.valid > 0 ? acc.sum / acc.valid : null,
         n: acc.valid
     }
 }

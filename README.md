@@ -135,7 +135,7 @@ do{
 
 import { SavBufferReader } from "sav-reader"; // import the commonjs module
 
-const updateFile = async (req, res, next) => {
+const postSavFile = async (req, res, next) => {
 
     // grab posted file from request
     const file1 = req.files.file1;
@@ -162,16 +162,26 @@ const updateFile = async (req, res, next) => {
     // this opens the file and loads all metadata (but not the data records)
     await sav.open()
 
-    // print the header, which contains number of cases, encoding, etc.
-    console.log(sav.meta.header)
+    const meta = sav.meta;
 
-    // print the vars
+    // print the header, which contains number of cases, encoding, etc.
+    console.log(meta.header)
+
+    // print the number of data rows (n_cases)
+    // note: sometimes n_cases is not available, depending on what product created the sav file.
+    console.log(meta.header.n_cases);
+
+    // print the number of variables
+    console.log(meta.header.n_vars)
+
+    // print the vars individually
     sav.meta.sysvars.forEach(v => {
 
         // print the var, type, label and missing values specifications
         console.log(v)
 
         // find and print value labels for this var if any
+        // note: a value label set may apply to multiple variables (!todo: but i should attach them anyway)
         const valueLabels = sav.meta.getValueLabels(v.name)
         if (valueLabels){
             console.log(valueLabels)
