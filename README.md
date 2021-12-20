@@ -99,6 +99,8 @@ console.log(sav.meta);
 
 ```
 
+
+
 ## Read the data records (all at once)
 
 ```javascript
@@ -119,17 +121,13 @@ do{
     if( row != null ){
 
         // do something with the row
-        // row.index contains the row index
-        // row.data contains the row data
-
-        // !!note: for simplicity i should maybe abandon the .index and .data concept and just return the row data
 
     }
 } while( row != null );
 
 ```
 
-## Example Usage (api method using Buffer)
+## Example usage (api method using Buffer)
 
 ```javascript
 
@@ -153,7 +151,7 @@ const postSavFile = async (req, res, next) => {
 ```
 
 
-## Print variables and value labels
+## Print meta info, variables and value labels
 
 ```javascript
 
@@ -175,18 +173,16 @@ const postSavFile = async (req, res, next) => {
     console.log(meta.header.n_vars)
 
     // print the vars individually
-    sav.meta.sysvars.forEach(v => {
+    meta.sysvars.forEach(v => {
 
         // print the var, type, label and missing values specifications
         console.log(v)
 
         // find and print value labels for this var if any
         // note: a value label set may apply to multiple variables (!todo: but i should attach them anyway)
-        const valueLabels = sav.meta.getValueLabels(v.name)
-        if (valueLabels){
-            console.log(valueLabels)
-        }
-
+        const valueLabels = meta.getValueLabels(v.name)
+        console.log(valueLabels)
+        
     })
 
 ```
