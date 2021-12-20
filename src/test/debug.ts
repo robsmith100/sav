@@ -29,9 +29,8 @@ const run = async () => {
     let row = null;
     do {
         row = await sav.readNextRow();
-                
-        if (row?.index >= 216) {
-            console.log(row.index + 1, row.data);
+        if (row && sav.rowIndex >= 10) {
+            console.log(sav.rowIndex + 1, row);
         }
     }
     while( row )

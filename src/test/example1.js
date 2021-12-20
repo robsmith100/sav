@@ -49,12 +49,12 @@ async function test1() {
         row = await sav.readNextRow();
 
         if( row != null ){
-            if( row.index % 1000 == 0 ){
-                console.log(row.index, row.data['uuid']);
+            if( sav.rowIndex % 1000 == 0 ){
+                console.log(sav.rowIndex, row['uuid']);
             }
 
-            if( row.data.Q1 != null ){
-                q1_frequencies[row.data.Q1] = (q1_frequencies[row.data.Q1] || 0) + 1;
+            if( row.Q1 != null ){
+                q1_frequencies[row.Q1] = (q1_frequencies[row.Q1] || 0) + 1;
             }
         }
         
