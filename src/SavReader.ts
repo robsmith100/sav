@@ -70,8 +70,10 @@ export class SavReader{
 
         // check for eof
         try {
-            if (!(await this.reader.peekByte())) // may throw Error upon EOF
+            let b = await this.reader.peekByte(); // may throw Error upon EOF
+            if (b === null || b === undefined) {
                 return null;
+            }
         }
         catch(err){
             if( !this.reader.isAtEnd() ){

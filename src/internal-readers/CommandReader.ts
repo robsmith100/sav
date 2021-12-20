@@ -23,9 +23,15 @@ export class CommandReader {
     
     async peekByte(): Promise<number> {
 
-        // first check commandBuffer
+        // first check commandBuffer, but if it returns a zero ... find the first non-zero (temp workaround)
         if (this.commandPointer > 0 && this.commandPointer < 8) {
-            return this.commandBuffer[this.commandPointer];
+            let i = this.commandPointer;
+            let b = this.commandBuffer[i];
+            while (b === 0 && i < 8) {
+                i++;
+                b = this.commandBuffer[i];
+            }
+            if (b !== 0) return b;
         }
 
         // otherwise...
