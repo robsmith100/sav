@@ -50,38 +50,28 @@ export class SavReader{
         if (this.rowIndex !== 0)
             throw Error("Row pointer already advanced. Cannot read all rows.")
 
-        let rowdata = [];
+        let rows = [];
         let row = null;
         do {
             row = await this.readNextRow(includeNulls);
             if (row) {
-                rowdata.push(row.data);
+                rows.push(row);
             }
         }
         while (row !== null)
-        return rowdata;
+        return rows;
 
     }
     
     /** Read the next row of data */
-    async readNextRow(includeNulls = false): Promise<SavIndexedRow>{
+    async readNextRow(includeNulls = false): Promise<any>{
 
-        let row: SavIndexedRow = {
-            data: {},
-            index: this.rowIndex
-        };
-
-        const compression = this.meta.header.compression;
+        let row: any = {}
 
         // check for eof
         try {
-            
-            const b = await this.reader.peekByte(); // may throw Error
-
-            // also check for EOF rather than just planning on the peek throwing an error
-            if (!b) {
+            if (!(await this.reader.peekByte())) // may throw Error upon EOF
                 return null;
-            }
         }
         catch(err){
             if( !this.reader.isAtEnd() ){
@@ -93,25 +83,24 @@ export class SavReader{
         for( let v of this.meta.sysvars ){
 
             if( v.type === SysVarType.numeric ){
-                const d = await this.reader.readDouble2(compression);
+                const d = await this.reader.readDouble2(this.meta.header.compression);
                 if( includeNulls || isValid(d))
-                    row.data[v.name] = d;
+                    row[v.name] = d;
             }
             else if( v.type === SysVarType.string ){
                 // read root
-                let str = await this.reader.read8CharString(compression);
+                let str = await this.reader.read8CharString(this.meta.header.compression);
 
                 // read string continuations if any
                 for( var j = 0; j < v.__nb_string_contin_recs; j++ ){
-                    str += await this.reader.read8CharString(compression);
+                    str += await this.reader.read8CharString(this.meta.header.compression);
                 }
 
                 const strVal = str != null ? str.trimEnd() : null;
                 if (includeNulls || isValid(strVal)) {
-                    row.data[v.name] = strVal;
+                    row[v.name] = strVal;
                 }
             }
-
 
         }
 
