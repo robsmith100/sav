@@ -1,4 +1,4 @@
-import { SavBufferReader } from './SavBufferReader.js';
+import { SavBufferReader } from '../SavBufferReader.js';
 import * as fs from "fs";
 
 // console coloring constants

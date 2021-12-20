@@ -74,21 +74,19 @@ export class VariableRecord{
 
     static async read(reader): Promise<VariableRecord> {
 
-        let r = reader;
-
         let vrec = new VariableRecord();
 
-        vrec.type = await r.readInt32();
+        vrec.type = await reader.readInt32();
 
-        vrec.hasLabel = (await r.readInt32()) == 1;
+        vrec.hasLabel = (await reader.readInt32()) == 1;
 
-        vrec.n_missing_values = await r.readInt32();
+        vrec.n_missing_values = await reader.readInt32();
 
-        vrec.printFormat = DisplayFormat.parseInt(await r.readInt32());
+        vrec.printFormat = DisplayFormat.parseInt(await reader.readInt32());
 
-        vrec.writeFormat = DisplayFormat.parseInt(await r.readInt32());
+        vrec.writeFormat = DisplayFormat.parseInt(await reader.readInt32());
 
-        vrec.shortName = await r.readString(8, true);
+        vrec.shortName = await reader.readString(8, true);
 
         vrec.label = null;
         if (vrec.hasLabel) {
@@ -96,16 +94,16 @@ export class VariableRecord{
             // These field are present only if has_var_label is true
             
             // The length, in characters, of the variable label, which must be a number between 0 and 120.
-            let labelLen = await r.readInt32();
+            let labelLen = await reader.readInt32();
 
             // This field has length label_len, rounded up to the nearest multiple of 32 bits.
             // The first label_len characters are the variable's variable label.
-            vrec.label = await r.readString(labelLen);
+            vrec.label = await reader.readString(labelLen);
 
             // consume the padding as explained above
             let padding = 4 - (labelLen % 4);
             if (padding < 4) {
-                await r.readString(padding);
+                await reader.readString(padding);
             }
         }
 
@@ -120,25 +118,25 @@ export class VariableRecord{
         // in the chapter introduction.
         vrec.missing = null;
         if (vrec.n_missing_values === 1) { // one discrete missing value
-            vrec.missing = await r.readDouble();
+            vrec.missing = await reader.readDouble();
         }
         else if (vrec.n_missing_values === 2 || vrec.n_missing_values === 3) { // two or three discrete missing values
             vrec.missing = [];
             for (var i = 0; i < vrec.n_missing_values; i++) {
-                vrec.missing.push(await r.readDouble());
+                vrec.missing.push(await reader.readDouble());
             }
         }
         else if (vrec.n_missing_values === -2) { // a range for missing values
             vrec.missing = {
-                min: await r.readDouble(),
-                max: await r.readDouble()
+                min: await reader.readDouble(),
+                max: await reader.readDouble()
             };
         }
         else if (vrec.n_missing_values === -3) { // a range for missing values plus a single discrete missing value
             vrec.missing = {
-                min: await r.readDouble(),
-                max: await r.readDouble(),
-                value: await r.readDouble()
+                min: await reader.readDouble(),
+                max: await reader.readDouble(),
+                value: await reader.readDouble()
             };
         }
         else if (vrec.n_missing_values === 0) { // no missing values
@@ -146,7 +144,6 @@ export class VariableRecord{
         else {
             throw Error("unknown missing values specification: " + vrec.n_missing_values);
         }
-
 
         return vrec;
     }
@@ -178,6 +175,7 @@ export class VariableRecord{
         v.printFormat = this.printFormat;
         v.writeFormat = this.writeFormat;
         v.__nb_string_contin_recs = this.stringExt; // not awesome that this is needed
+        v.__shortName = this.shortName;
 
         return v;
 

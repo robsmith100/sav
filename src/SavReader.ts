@@ -2,6 +2,7 @@ import * as stream from "stream";
 import { AsyncChunkReader } from "./internal-readers/AsyncChunkReader.js";
 import { AsyncReader } from "./internal-readers/AsyncReader.js";
 import { CommandReader } from "./internal-readers/CommandReader.js";
+import { SavIndexedRow } from "./SavIndexedRow.js";
 import { SavMeta } from "./SavMeta.js";
 import { SavMetaLoader } from "./SavMetaLoader.js";
 import { SysVarType } from "./SysVar.js";
@@ -15,7 +16,7 @@ export class SavReader{
 
     reader: CommandReader;
     meta: SavMeta;
-    rowIndex: number;
+    rowIndex: number = 0;
 
     constructor(readable: stream.Readable){
         const r1 = new AsyncReader(readable);
@@ -44,10 +45,28 @@ export class SavReader{
         throw Error('not implemented');
     }
 
-    /** Read the next row of data */
-    async readNextRow(includeNulls = false){
+    async readAllRows(includeNulls = false): Promise<any[]> {
 
-        let row = {
+        if (this.rowIndex !== 0)
+            throw Error("Row pointer already advanced. Cannot read all rows.")
+
+        let rowdata = [];
+        let row = null;
+        do {
+            row = await this.readNextRow(includeNulls);
+            if (row) {
+                rowdata.push(row.data);
+            }
+        }
+        while (row !== null)
+        return rowdata;
+
+    }
+    
+    /** Read the next row of data */
+    async readNextRow(includeNulls = false): Promise<SavIndexedRow>{
+
+        let row: SavIndexedRow = {
             data: {},
             index: this.rowIndex
         };

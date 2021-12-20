@@ -1,4 +1,4 @@
-import { SavFileReader } from "./SavFileReader.js";
+import { SavFileReader } from "../SavFileReader.js";
 
 // console coloring constants
 const cc = {

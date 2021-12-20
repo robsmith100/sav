@@ -13,8 +13,10 @@
     "dist"
   ],
   "scripts": {
-    "test1": "tsc && node dist/test1.js",
-    "test2": "tsc && node dist/test2.js",
+    "test": "tsc && node dist/test/test-files.js",
+    "debug": "tsc && node dist/test/debug.js",
+    "example1": "tsc && node dist/test/example1.js",
+    "example2": "tsc && node dist/test/example2.js",
     "build": "tsc"
   },
   "repository": {

@@ -140,12 +140,13 @@ export class SavMetaLoader{
         meta.header.n_vars = meta.sysvars.length;
         delete(meta.header.case_size); // (dont want to confuse anyone because it's the number of vrecs, not sysvars)
 
-        // // adjust valuelabels map to refer to new names
-        // this.meta.valueLabels = this.meta.valueLabels.map(set => {
-        //     var set2 = {...set};
-        //     set2.appliesToShortNames = set2.appliesToShortNames.map(shortname => this.meta.sysvars.find(sysvar => sysvar.shortName == shortname).name);
-        //     return set2;
-        // });
+        // adjust valuelabels map to refer to new names
+        meta.valueLabels = meta.valueLabels.map(set => {
+            var set2 = {...set};
+            set2.appliesToShortNames = set2.appliesToShortNames.map(
+                shortname => meta.sysvars.find(sysvar => sysvar.__shortName == shortname).name);
+            return set2;
+        });
         
         return meta;
 
