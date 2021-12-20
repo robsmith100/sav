@@ -136,7 +136,7 @@ const tests = [
             m => m.getValueLabels("diag").find(vl => vl.val === 3).label === "Bullimia Nervosa after Anorexia"
         ],
         data_check: [
-            rows => rows.length === 22
+            rows => rows.length === 217
         ]
     },
     {
@@ -149,17 +149,83 @@ const tests = [
             rows => rows.length === 3390
         ]
     },
-    { file: "bankloan_binning.sav", },
-    { file: "bankloan_cs_noweights.sav", },
-    { file: "bankloan_cs.sav", },
-    { file: "bankloan.sav", },
-    { file: "behavior_ini.sav", },
-    { file: "behavior.sav", },
-    { file: "brakes.sav", },
-    { file: "breakfast_overall.sav", },
-    { file: "breakfast.sav", },
-    { file: "broadband_1.sav", },
-    { file: "broadband_2.sav", },
+    {
+        file: "bankloan_binning.sav",
+        meta_check: [
+            m => m.header.n_vars === 9,
+            m => m.header.n_cases === 5000
+        ]
+    },
+    {
+        file: "bankloan_cs_noweights.sav",
+        meta_check: [
+            m => m.header.n_vars === 12,
+            m => m.header.n_cases === 1500
+        ]
+    },
+    {
+        file: "bankloan_cs.sav",
+        meta_check: [
+            m => m.header.n_vars === 15,
+            m => m.header.n_cases === 1500
+        ]
+    },
+    {
+        file: "bankloan.sav",
+        meta_check: [
+            m => m.header.n_vars === 12,
+            m => m.header.n_cases === 850
+        ]
+    },
+    {
+        file: "behavior_ini.sav",
+        meta_check: [
+            m => m.header.n_vars === 2,
+            m => m.header.n_cases === 30
+        ]
+    },
+    {
+        file: "behavior.sav",
+        meta_check: [
+            m => m.header.n_vars === 16,
+            m => m.header.n_cases === 15
+        ]
+    },
+    {
+        file: "brakes.sav",
+        meta_check: [
+            m => m.header.n_vars === 2,
+            m => m.header.n_cases === 128
+        ]
+    },
+    {
+        file: "breakfast_overall.sav",
+        meta_check: [
+            m => m.header.n_vars === 16,
+            m => m.header.n_cases === 42
+        ]
+    },
+    {
+        file: "breakfast.sav",
+        meta_check: [
+            m => m.header.n_vars === 17,
+            m => m.header.n_cases === 252
+        ]
+    },
+    {
+        file: "broadband_1.sav",
+        meta_check: [
+            m => m.header.n_vars === 89,
+            m => m.header.n_cases === 60
+        ]
+    },
+    {
+        file: "broadband_2.sav",
+        meta_check: [
+            m => m.header.n_vars === 89,
+            m => m.header.n_cases === 63
+        ]
+    },
     { file: "cable_survey.sav", },
     { file: "car_insurance_claims.sav", },
     { file: "car_sales_unprepared.sav", },

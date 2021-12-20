@@ -3,7 +3,7 @@ import { SavFileReader } from "..";
 const sampleFilesFolder: string = "C:\\Program Files\\IBM\\SPSS Statistics\\Samples\\English";
 console.log("sampleFilesFolder", sampleFilesFolder);
 
-const filename = `${sampleFilesFolder}/aflatoxin.sav`;
+const filename = `${sampleFilesFolder}/anorectic.sav`;
 
 const run = async () => {
 
@@ -11,15 +11,30 @@ const run = async () => {
     const sav = new SavFileReader(filename);
     await sav.open();
 
+    
+
+    console.log("firstRecordPosition", sav.meta.firstRecordPosition);
+    console.log("pos", sav.reader.getPosition());
+
     console.log(sav.meta.header);
     console.log(sav.meta.sysvars);
     //console.log(sav.meta.valueLabels);
 
-    const rowData = await sav.readAllRows();
-    let rowIndex = 1;
-    for (let row of rowData) {
-        console.log(rowIndex++, row);
+    // const rowData = await sav.readAllRows();
+    // let rowIndex = 1;
+    // for (let row of rowData) {
+    //     console.log(rowIndex++, row);
+    // }
+
+    let row = null;
+    do {
+        row = await sav.readNextRow();
+                
+        if (row?.index >= 216) {
+            console.log(row.index + 1, row.data);
+        }
     }
+    while( row )
 
 }
 run();

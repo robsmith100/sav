@@ -47,7 +47,7 @@ export class AsyncReader extends IAsyncReader{
     /**
      * is called when end of stream is reached
      */
-    _endCallback(){
+    _endCallback() {
         this.atEnd = true;
     }
 
@@ -91,7 +91,8 @@ export class AsyncReader extends IAsyncReader{
                     //     this.position += buf.length
                     //     reject('not enough data read')
                     // }
-                    else{
+                    else {
+                        //console.log(`just read ${buf.length} bytes from file (of ${len} bytes requested)`);
                         this.position += buf.length
                         resolve(buf)
                     }
@@ -102,7 +103,8 @@ export class AsyncReader extends IAsyncReader{
             //     this.position += buf.length
             //     reject('not enough data read')
             // }
-            else{
+            else {
+                //console.log(`just read ${buf.length} bytes from file (of ${len} bytes requested)`);
                 this.position += buf.length
                 resolve(buf);
             }
