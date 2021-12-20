@@ -71,14 +71,12 @@ export class SavReader{
             index: this.rowIndex
         };
 
-        //console.log(`\x1b[35mreading sav row ${(this.rowIndex + 1)} (pos=${this.reader.getPosition()})\x1b[0m`)
-
         const compression = this.meta.header.compression;
 
         // check for eof
         try {
             
-            const b = await this.reader.peekByte(); 
+            const b = await this.reader.peekByte(); // may throw Error
 
             // also check for EOF rather than just planning on the peek throwing an error
             if (!b) {

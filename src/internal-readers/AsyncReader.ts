@@ -87,24 +87,14 @@ export class AsyncReader extends IAsyncReader{
                         }
                         reject('No data read even after wait. This can happen if highWaterMark is smaller than read size.')
                     }
-                    // else if (buf.length !== len){
-                    //     this.position += buf.length
-                    //     reject('not enough data read')
-                    // }
                     else {
-                        //console.log(`just read ${buf.length} bytes from file (of ${len} bytes requested)`);
                         this.position += buf.length
                         resolve(buf)
                     }
 
                 }
             }
-            // else if (buf.length !== len){
-            //     this.position += buf.length
-            //     reject('not enough data read')
-            // }
             else {
-                //console.log(`just read ${buf.length} bytes from file (of ${len} bytes requested)`);
                 this.position += buf.length
                 resolve(buf);
             }
