@@ -1,7 +1,7 @@
 import { DictionaryTerminationRecord } from "./records/DictionaryTerminationRecord.js";
 import { DocumentRecord } from "./records/DocumentRecord.js";
 import { HeaderRecord } from "./records/HeaderRecord.js";
-import { EncodingInfoRecord, InfoRecord, LongVarNameEntry, LongVarNamesInfoRecord } from "./records/InfoRecord.js";
+import { EncodingInfoRecord, InfoRecord, LongVarNameEntry, LongVarNamesInfoRecord, StringVarLengthEntry, SuperLongStringVarsRecord } from "./records/InfoRecord.js";
 import { InfoRecordSubType, RecordType } from "./records/RecordType.js";
 import { ValueLabelRecord } from "./records/ValueLabelRecord.js";
 import { VariableRecord } from "./records/VariableRecord.js";
@@ -28,8 +28,8 @@ export class SavMetaLoader{
         let recent_string_vrec: VariableRecord = null; 
         let documentRecord: DocumentRecord;
         let longVariableNamesMap: LongVarNameEntry[];
+        let longStringVarsMap: StringVarLengthEntry[] = null;
         
-
         let done = false;
         do{
 
@@ -92,7 +92,9 @@ export class SavMetaLoader{
                 else if (rec.subType === InfoRecordSubType.LongVariableNamesRecord) {
                     // grab long names from it
                     longVariableNamesMap = (rec as LongVarNamesInfoRecord).longNameMap;
-
+                }
+                else if( rec.subType === InfoRecordSubType.SuperLongStringVariablesRecord){
+                    longStringVarsMap = (rec as SuperLongStringVarsRecord).map;
                 }
 
             }
@@ -119,6 +121,31 @@ export class SavMetaLoader{
             vrecs
             .map(vrec => vrec.toSysVar())
             .filter(vrec => vrec) // filter out nulls because some vrecs (string continuation vrecs) can't be converted to sysvars
+
+        // link extra long string vars
+        if( longStringVarsMap ){
+            for( let entry of longStringVarsMap ){
+                
+                let sysvar = meta.sysvars.find(sv => sv.name === entry.name);
+                const varIndex = meta.sysvars.indexOf(sysvar);
+
+                // SPSS doesn't break apart string vars until the length > 255
+                // The pattern is that once length > 255, it breaks into nbsegments = floor((len + 251) / 252)
+                // In other words, in breaks every multiple of 252 starting at 253, with exception that it doesn't break strings < 256
+                // So it breaks at 256 (instead of 253), 505, 757, 1009, 1261, ...
+
+                const nbSegments = Math.floor((entry.length + 251) / 252);
+
+                // attach child string vars
+                for( let i = 1; i < nbSegments; i++ ){
+                    let childvar = meta.sysvars[varIndex + i];
+                    sysvar.__child_string_sysvars.push(childvar);
+                    sysvar.printFormat.width = entry.length; // probably not needed, but may be helpful to reader
+                    childvar.__is_child_string_var = true;
+                }
+            }
+            meta.sysvars = meta.sysvars.filter(v => !v.__is_child_string_var);
+        }
         
         // lookup weight (important to do this before assigning long var names)
         if (meta.header.weightIndex) {
@@ -139,7 +166,7 @@ export class SavMetaLoader{
         }
 
         meta.header.n_vars = meta.sysvars.length;
-        delete(meta.header.case_size); // ??? why? ohhhh because that's the number of vrecs
+        delete(meta.header.case_size); // deleting because the number of vrecs is less helpful that n_vars
 
         // // adjust valuelabels map to refer to new names
         // this.meta.valueLabels = this.meta.valueLabels.map(set => {
@@ -147,7 +174,6 @@ export class SavMetaLoader{
         //     set2.appliesToShortNames = set2.appliesToShortNames.map(shortname => this.meta.sysvars.find(sysvar => sysvar.shortName == shortname).name);
         //     return set2;
         // });
-
         
         return meta;
 

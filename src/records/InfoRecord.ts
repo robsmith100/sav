@@ -106,12 +106,10 @@ export class InfoRecord{
             return rec_ext;
         }
         else if( rec.subType === InfoRecordSubType.SuperLongStringVariablesRecord ){
-            
-            // TODO: port this over from my C# lib
 
             // this records helps piece together string variables that were separated
-            // because their content was > 255 or some long length
-            // because old SPSS files couldn't support the super long length
+            // because their content was > 255
+            // (maybe old SPSS files couldn't support the longer length)
 
             // if (xlong_string_map != null) {
             //     throw new Exception("Didn't expect to receive multiple very long string records");
@@ -121,12 +119,42 @@ export class InfoRecord{
             // // this byte array is a \0\t separated list of VARNAME=LENGTH entries for string variables with length > 255?
             // // example: Z6=2283\0\tZ7P=587\0\tZ7N=685\0\tZ14P=430\0\tZ14N=460\0\tZ18N=475\0\tZ21N=702\0\tZ30P=1785\0\tZ30N=402\0\tZ33P=334\0\tZ36P=328\0\tZ36N=1066\0\tZ41P=911\0\tZ44P=323\0\tZ44N=483\0\tZ48N=285\0\tZ52N=403\0\t
 
-            // // i don't think this can contain crazy characters, so encoding shouldn't matter
+            // // i don't think this can contain special characters, so encoding shouldn't matter
             // string str1 = System.Text.ASCIIEncoding.UTF8.GetString(bytedata);
             // xlong_string_map = str1;
 
 
-            return rec;
+            let entries: StringVarLengthEntry[] = [];
+            try{
+
+                let byteDataStr = byteData;
+                if (typeof (byteDataStr) !== "string") {
+                    byteDataStr = bytesToSring(byteDataStr);
+                }
+                let mapStr = byteDataStr?.trimEnd();
+                let mapStrArray = mapStr?.split("\0\t");
+                
+                for( let entryStr of mapStrArray ){
+                    const pcs = entryStr.split('=');
+                    const entry: StringVarLengthEntry = {
+                        name: pcs?.[0],
+                        length: parseInt(pcs?.[1])
+                    };
+                    entries.push(entry);
+                }
+
+            }
+            catch(err){
+                console.error(err);
+                //throw Error(err);
+            }
+
+            const rec_exmap: SuperLongStringVarsRecord = {
+                ...rec,
+                map: entries
+            }
+
+            return rec_exmap;
         }
         else if( rec.subType === InfoRecordSubType.EncodingRecord ){
             
@@ -176,4 +204,15 @@ export class LongVarNamesInfoRecord extends InfoRecord{
     
     longNameMap: LongVarNameEntry[];
     
+}
+
+export class SuperLongStringVarsRecord extends InfoRecord{
+
+    map: StringVarLengthEntry[];
+
+}
+
+export class StringVarLengthEntry{
+    name: string;
+    length: number;
 }
