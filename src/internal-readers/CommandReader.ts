@@ -22,6 +22,19 @@ export class CommandReader {
     peek = async (len: number): Promise<Buffer> => await this.reader.peek(len);
     
     async peekByte(): Promise<number> {
+
+        // first check commandBuffer, but if it returns a zero ... find the first non-zero (temp workaround)
+        if (this.commandPointer > 0 && this.commandPointer < 8) {
+            let i = this.commandPointer;
+            let b = this.commandBuffer[i];
+            while (b === 0 && i < 8) {
+                i++;
+                b = this.commandBuffer[i];
+            }
+            if (b !== 0) return b;
+        }
+
+        // otherwise...
         var buf = await this.reader.peek(1);
         if (buf.length !== 1) throw Error("not enough bytes read to peek a Byte");
         return buf[0];
@@ -55,6 +68,7 @@ export class CommandReader {
     }
 
     async readDouble(): Promise<number> {
+
         var buf = await this.reader.read(8);
         if (buf.length !== 8) throw Error("not enough bytes read for Double");
         
@@ -70,15 +84,17 @@ export class CommandReader {
         bufView[7] = buf[0];
         let dv = new DataView(ab);
         let d = dv.getFloat64(0);
+
         return d;
     
     }
 
     async getCommandCode(): Promise<number>{
 
-        if (this.commandPointer == 0) {
-            // read command bytes from buffer
+        if (this.commandPointer === 0) {
+            // read command bytes into buffer
             this.commandBuffer = await this.reader.read(8);
+            if (this.commandBuffer.length === 0) return null;
             if (this.commandBuffer.length !== 8) throw Error("not enough bytes read for command");
         }
 
@@ -87,32 +103,32 @@ export class CommandReader {
         this.commandPointer++;
         if (this.commandPointer === 8)
             this.commandPointer = 0;
-
+        
         return code;
     }
 
     async readDouble2(compression): Promise<number>{
         if (compression == null)
             return await this.readDouble();
-
-        var code = await this.getCommandCode();
+        
+        let code = await this.getCommandCode();
         while (code === 0)
-            code = await this.getCommandCode();
-
+            code = await this.getCommandCode(); // huh? padding or something?
+        
         let d = null;
 
         if (code > 0 && code < 252 ){
             // compressed data
             d = code - compression.bias;
         }
-        else if (code == 252) {
+        else if (code === 252) {
             // end of file
         }
-        else if (code == 253) {
+        else if (code === 253) {
             // non-compressible piece, read from stream
             d = await this.readDouble(); // reads from end (since commands have already been read)
         }
-        else if (code == 254) {
+        else if (code === 254) {
             // string value that is all spaces
 
             //d = 0x2020202020202020;
@@ -121,11 +137,14 @@ export class CommandReader {
             //d = null;
             
         }
-        else if (code == 255) {
+        else if (code === 255) {
             // system-missing
         }
-        else if (code == 0) {
+        else if (code === 0) {
             // ignore
+        }
+        else if (code === null) {
+            // ignore    
         }
         else {
             throw new Error('unknown error reading compressed double. code is ' + code);
@@ -167,6 +186,9 @@ export class CommandReader {
             // system-missing
         }
         else if (code === 0) {
+            // ignore
+        }
+        else if (code === null) {
             // ignore
         }
         else {

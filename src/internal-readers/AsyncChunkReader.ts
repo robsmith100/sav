@@ -21,7 +21,7 @@ export class AsyncChunkReader extends IPeekableAsyncReader{
     }
     
     readChunk = async (): Promise<void> => {
-
+        
         // read another chunk
         const buf = await this.reader.read(this.chunkSize);
         
@@ -30,7 +30,7 @@ export class AsyncChunkReader extends IPeekableAsyncReader{
 
         // append the new buffer
         this.buffer = unused_buf ? Buffer.concat([unused_buf, buf]) : buf;
-        this.bufferPos = 0; // reset back to the start since we excluded consumed portion above
+        this.bufferPos = 0; // reset back to the start since we excluded consumed portion above wait
     }
     
     isAtEnd() {
@@ -47,7 +47,7 @@ export class AsyncChunkReader extends IPeekableAsyncReader{
     close = async () => this.reader.close();
 
     async checkBuffer(len): Promise<void> {
-        while (!this.buffer || (!this.isAtEnd() && len > this.buffer.length - this.bufferPos)) {
+        while (!this.buffer || (!this.isAtEnd() && len > (this.buffer.length - this.bufferPos))) {
             await this.readChunk();
         }
     }

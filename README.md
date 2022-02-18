@@ -1,17 +1,15 @@
-# sav
+# sav-reader
 Javascript library to read .sav data files.
 
-This is my first Javascript project, first npm project, first typescript package, etc. So take that fwiw.
-
-Credits to [GNU PSPP](https://www.gnu.org/software/pspp/) for documenting most of the .sav file format. I reverse engineered a few missing specs, such as extreme length string vars.
+Credits to [GNU PSPP](https://www.gnu.org/software/pspp/) for documenting most of the .sav file format.
 
 ## Motivation
 
-I needed a way to analyze the records in a local .sav file, without opening the whole file into memory. The library only loads
-the metadata (see below) into memory. The records are enumerated upon request. If the file is kept open, the record pointer
-can be reset to the first record for another table scan if needed (excluding the need to re-parse the metadata).
+I needed a way to analyze the records in a local .sav file, without opening the entire file into memory. The `open` command only loads the metadata (see below) into memory. The records can then be enumerated upon request using `readNextRow`. If the file is kept open, the record pointer can be reset to the first record for another table scan if needed, excluding the need to re-parse the metadata.
 
-Actually then later I wanted to use this in a node express api, where the file was posted and loaded into memory as a Buffer. So then I added the SavBufferReader.
+Depending on your usage, and if the file is small enough, you can read all records using `readAllRows` rather than reading them one at a time.
+
+I also wanted to use this in a node express api, where the file was posted and loaded into memory as a Buffer. So I added the SavBufferReader (see example below).
 
 ## Metadata
 
@@ -83,70 +81,109 @@ npm i sav-reader
 ```
 
 
-## Example Usage
-
-See src/test1.js for a working example, just in case there are typos here. You'll need to bring your own .sav file.
+## Open a local file
 
 ```javascript
 
-import { SavFileReader } from "sav-reader";
+import { SavFileReader } from "sav-reader"; // import the commonjs module
 
-// note: there's a SavBufferReader you can use if you already have the file read into memory
-// import { SavBufferReader } from "sav-reader";
+// create new sav reader from local file
+const sav = new SavFileReader("my data file.sav");
 
-async function test1(){
+// this opens the file and loads all metadata (but not the data records)
+await sav.open();
+
+// print the header, vars, valuelabels, etc.
+// (more info about vars and valuelabels below)
+console.log(sav.meta);
+
+```
+
+
+
+## Read the data records (all at once)
+
+```javascript
+
+// read all data rows into memory
+const data = await sav.readAllRows();
+
+```
+
+## Read the data records (iteratively)
+
+```javascript
+
+// row iteration (only one row is used at a time)
+let row = null;
+do{
+    row = await sav.readNextRow();
+    if( row != null ){
+
+        // do something with the row
+
+    }
+} while( row != null );
+
+```
+
+## Example usage (api method using Buffer)
+
+```javascript
+
+import { SavBufferReader } from "sav-reader"; // import the commonjs module
+
+const postSavFile = async (req, res, next) => {
+
+    // grab posted file from request
+    const file1 = req.files.file1;
+
+    // get buffer
+    const buffer = file1.data;
+
+    const sav = new SavBufferReader(buffer);
+    await sav.open(); // load metadata
+    
+    // etc...
+
+}
+
+```
+
+
+## Print meta info, variables and value labels
+
+```javascript
 
     const sav = new SavFileReader(filename);
-
-    // alternative:
-    // const sav = new SavBufferReader(myBuf); // where myBuf is a Buffer
 
     // this opens the file and loads all metadata (but not the data records)
     await sav.open()
 
-    // print the header, which contains number of cases, encoding, etc.
-    console.log(sav.meta.header)
+    const meta = sav.meta;
 
-    // print the vars
-    sav.meta.sysvars.forEach(v => {
+    // print the header, which contains number of cases, encoding, etc.
+    console.log(meta.header)
+
+    // print the number of data rows (n_cases)
+    // note: sometimes n_cases is not available, depending on what product created the sav file.
+    console.log(meta.header.n_cases);
+
+    // print the number of variables
+    console.log(meta.header.n_vars)
+
+    // print the vars individually
+    meta.sysvars.forEach(v => {
 
         // print the var, type, label and missing values specifications
         console.log(v)
 
         // find and print value labels for this var if any
-        const valueLabels = sav.meta.getValueLabels(v.name)
-        if (valueLabels){
-            console.log(valueLabels)
-        }
-
+        // note: a value label set may apply to multiple variables (!todo: but i should attach them anyway)
+        const valueLabels = meta.getValueLabels(v.name)
+        console.log(valueLabels)
+        
     })
-
-  // object to collect test frequencies of variable Q1
-  let test_frequencies = {};
-
-  // row iteration (only one row is used at a time)
-  let row = null;
-  do{
-      row = await sav.readNextRow();
-      if( row != null ){
-
-          // print the row index and value of variable 'uuid' every 1000 records
-          if( row.index % 1000 === 0 ){
-              console.log(row.index, row.data['uuid']);
-          }
-
-          // collect frequencies of variable 'Q1'
-          if( row.data.Q1 != null ){
-              q1_frequencies[row.data.Q1] = (q1_frequencies[row.data.Q1] || 0) + 1;
-          }
-      }
-  } while( row != null );
-
-  // print the frequencies
-  console.log(q1_frequencies);
-
-}
-
 
 ```
 

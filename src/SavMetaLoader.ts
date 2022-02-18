@@ -33,7 +33,7 @@ export class SavMetaLoader{
         let done = false;
         do{
 
-            let rec_type = await reader.peekInt();
+            const rec_type = await reader.peekInt();
 
             if( rec_type === RecordType.VariableRecord ){
                 
@@ -61,7 +61,7 @@ export class SavMetaLoader{
                 await reader.readInt32(); // consume peeked record type
 
                 // a value label record contains one set of value/label pairs and is attached to one or more variables
-                let set = await ValueLabelRecord.read(reader, vrecs); // TODO: make sure these guys are matched app (see appliesTo aka appliesToShortName)
+                const set = await ValueLabelRecord.read(reader, vrecs); // TODO: make sure these guys are matched app (see appliesTo aka appliesToShortName)
                 if( set != null ){
                     meta.valueLabels.push(set);
                 }
@@ -96,7 +96,6 @@ export class SavMetaLoader{
                 else if( rec.subType === InfoRecordSubType.SuperLongStringVariablesRecord){
                     longStringVarsMap = (rec as SuperLongStringVarsRecord).map;
                 }
-
             }
             else if( rec_type === RecordType.DictionaryTerminationRecord ){
                 
@@ -153,7 +152,7 @@ export class SavMetaLoader{
             const weight_shortName = weight_vrec.shortName;
             meta.header.weight = meta.sysvars.find(sysvar => sysvar.name === weight_shortName);
         }
-        delete(meta.header.weightIndex); // ?? FIX ME (eh, it's probably okay)
+        delete(meta.header.weightIndex); // (don't want weightIndex to confuse anyone since it's an index into vrecs, not sysvars)
 
         // assign long variable names
         if (longVariableNamesMap) {
@@ -166,14 +165,16 @@ export class SavMetaLoader{
         }
 
         meta.header.n_vars = meta.sysvars.length;
+
         delete(meta.header.case_size); // deleting because the number of vrecs is less helpful that n_vars
 
-        // // adjust valuelabels map to refer to new names
-        // this.meta.valueLabels = this.meta.valueLabels.map(set => {
-        //     var set2 = {...set};
-        //     set2.appliesToShortNames = set2.appliesToShortNames.map(shortname => this.meta.sysvars.find(sysvar => sysvar.shortName == shortname).name);
-        //     return set2;
-        // });
+        // adjust valuelabels map to refer to new names
+        meta.valueLabels = meta.valueLabels.map(set => {
+            var set2 = {...set};
+            set2.appliesToShortNames = set2.appliesToShortNames.map(
+                shortname => meta.sysvars.find(sysvar => sysvar.__shortName == shortname).name);
+            return set2;
+        });
         
         return meta;
 

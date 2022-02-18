@@ -47,7 +47,7 @@ export class AsyncReader extends IAsyncReader{
     /**
      * is called when end of stream is reached
      */
-    _endCallback(){
+    _endCallback() {
         this.atEnd = true;
     }
 
@@ -87,22 +87,14 @@ export class AsyncReader extends IAsyncReader{
                         }
                         reject('No data read even after wait. This can happen if highWaterMark is smaller than read size.')
                     }
-                    // else if (buf.length !== len){
-                    //     this.position += buf.length
-                    //     reject('not enough data read')
-                    // }
-                    else{
+                    else {
                         this.position += buf.length
                         resolve(buf)
                     }
 
                 }
             }
-            // else if (buf.length !== len){
-            //     this.position += buf.length
-            //     reject('not enough data read')
-            // }
-            else{
+            else {
                 this.position += buf.length
                 resolve(buf);
             }

@@ -1,20 +1,21 @@
 {
   "name": "sav-reader",
-  "version": "2.0.6",
+  "version": "2.0.1",
   "description": "Read .sav files (SPSS, PSPP), records and metadata.",
   "main": "dist/index.js",
   "type": "commonjs",
   "exports": {
     ".": {
-        "require": "./dist/index.js"
+      "require": "./dist/index.js"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "test1": "tsc && node dist/test1.js",
-    "test2": "tsc && node dist/test2.js",
+    "test": "tsc && node dist/test/test-files.js",
+    "debug": "tsc && node dist/test/debug.js",
+    "example1": "tsc && node dist/test/example1.js",
     "build": "tsc"
   },
   "repository": {

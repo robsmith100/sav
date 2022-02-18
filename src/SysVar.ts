@@ -20,7 +20,7 @@ export class SysVar{
     missing: any;
 
     /**
-     * For internal use when reading data
+     * For internal use when reading data. Should probably find a better way to approach this.
      */
     __nb_string_contin_recs: number;
 
@@ -30,6 +30,11 @@ export class SysVar{
     __child_string_sysvars: SysVar[];
 
     __is_child_string_var: boolean;
+
+    /**
+     * For internal use when mapping valuelabels. Should find a better way to approach this.
+     */
+    __shortName: string;
     
 }
 

@@ -8,7 +8,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceFolder}/dist/test1.js"
+            "program": "${workspaceFolder}/dist/test/debug.js"
         }
     ]
 }

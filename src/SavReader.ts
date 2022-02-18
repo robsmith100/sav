@@ -2,6 +2,7 @@ import * as stream from "stream";
 import { AsyncChunkReader } from "./internal-readers/AsyncChunkReader.js";
 import { AsyncReader } from "./internal-readers/AsyncReader.js";
 import { CommandReader } from "./internal-readers/CommandReader.js";
+import { SavIndexedRow } from "./SavIndexedRow.js";
 import { SavMeta } from "./SavMeta.js";
 import { SavMetaLoader } from "./SavMetaLoader.js";
 import { SysVarType } from "./SysVar.js";
@@ -15,7 +16,7 @@ export class SavReader{
 
     reader: CommandReader;
     meta: SavMeta;
-    rowIndex: number;
+    rowIndex: number = 0;
 
     constructor(readable: stream.Readable){
         const r1 = new AsyncReader(readable);
@@ -44,39 +45,49 @@ export class SavReader{
         throw Error('not implemented');
     }
 
+    async readAllRows(includeNulls = false): Promise<any[]> {
+
+        if (this.rowIndex !== 0)
+            throw Error("Row pointer already advanced. Cannot read all rows.")
+
+        let rows = [];
+        let row = null;
+        do {
+            row = await this.readNextRow(includeNulls);
+            if (row) {
+                rows.push(row);
+            }
+        }
+        while (row !== null)
+        return rows;
+
+    }
+    
     /** Read the next row of data */
-    async readNextRow(includeNulls = false){
+    async readNextRow(includeNulls = false): Promise<any>{
 
-        let r = this.reader;
-
-        var row = {
-            data: {},
-            index: this.rowIndex
-        };
-
-
-        let compression = this.meta.header.compression;
+        let row: any = {}
 
         // check for eof
         try {
-            // todo: might want to check for an EOF char or something rather than just planning on this throwing an error
-            await r.peekByte(); 
+            let b = await this.reader.peekByte(); // may throw Error upon EOF
+            if (b === null || b === undefined) {
+                return null;
+            }
         }
         catch(err){
-            var atEnd = r.isAtEnd();
-            if( !atEnd ){
+            if( !this.reader.isAtEnd() ){
                 throw Error(err);
             }
             return null;
         }
 
-        for( var i in this.meta.sysvars ){
-            var v = this.meta.sysvars[i];
+        for( let v of this.meta.sysvars ){
 
             if( v.type === SysVarType.numeric ){
-                var d = await r.readDouble2(compression);
+                const d = await this.reader.readDouble2(this.meta.header.compression);
                 if( includeNulls || isValid(d))
-                    row.data[v.name] = d;
+                    row[v.name] = d;
             }
             else if( v.type === SysVarType.string ){
 
@@ -88,11 +99,11 @@ export class SavReader{
                     let varStr = "";
                     
                     // read root
-                    varStr += await r.read8CharString(compression);
+                    varStr += await this.reader.read8CharString(this.meta.header.compression);
 
                     // read string continuations if any
                     for( var j = 0; j < sv.__nb_string_contin_recs; j++ ){
-                        varStr += await r.read8CharString(compression);
+                        varStr += await this.reader.read8CharString(this.meta.header.compression);
                     }
 
                     if( varStr.length > 255 ){
@@ -109,10 +120,9 @@ export class SavReader{
 
                 const strVal = str != null ? str.trimEnd() : null;
                 if (includeNulls || isValid(strVal)) {
-                    row.data[v.name] = strVal;
+                    row[v.name] = strVal;
                 }
             }
-
 
         }
 
