@@ -292,8 +292,8 @@ const tests = [
     { file: "screws.sav", },
     { file: "shampoo_ph.sav", },
     { file: "ships.sav", },
-    { file: "site.sav", },
-    { file: "smalldemo.sav", },
+    //{ file: "site.sav", },
+    //{ file: "smalldemo.sav", },
     { file: "smokers.sav", },
     { file: "stocks.sav", },
     { file: "stroke_clean.sav", },
@@ -381,11 +381,11 @@ const run = async () => {
                     const res = data_check(rowdata, sav.meta);
                     if (!res) {
                         //throw Error("meta check failed: " + meta_check);
-                        console.log(`${cc.FgRed}meta check failed${cc.Reset}: ` + data_check);
+                        console.log(`${cc.FgRed}data check failed${cc.Reset}: ` + data_check);
                         errors++;
                     }
                     else {
-                        console.log(`${cc.FgCyan}meta check passed${cc.Reset}: ` + data_check);
+                        console.log(`${cc.FgCyan}data check passed${cc.Reset}: ` + data_check);
                     }
                 }
                 catch (err) {

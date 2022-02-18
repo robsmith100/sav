@@ -90,12 +90,32 @@ export class SavReader{
                     row[v.name] = d;
             }
             else if( v.type === SysVarType.string ){
-                // read root
-                let str = await this.reader.read8CharString(this.meta.header.compression);
 
-                // read string continuations if any
-                for( var j = 0; j < v.__nb_string_contin_recs; j++ ){
-                    str += await this.reader.read8CharString(this.meta.header.compression);
+                let all_sysvars = [v, ...(v.__child_string_sysvars || [])];
+
+                let str = "";
+                for( let sv of all_sysvars ){
+
+                    let varStr = "";
+                    
+                    // read root
+                    varStr += await this.reader.read8CharString(this.meta.header.compression);
+
+                    // read string continuations if any
+                    for( var j = 0; j < sv.__nb_string_contin_recs; j++ ){
+                        varStr += await this.reader.read8CharString(this.meta.header.compression);
+                    }
+
+                    if( varStr.length > 255 ){
+                        varStr = varStr.substring(0, 255);
+                    }
+                    str += varStr;
+
+                    // for testing
+                    // if( all_sysvars.length > 1 ){
+                    //     str += "|";
+                    // }
+                                
                 }
 
                 const strVal = str != null ? str.trimEnd() : null;

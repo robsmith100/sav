@@ -174,8 +174,13 @@ export class VariableRecord{
         v.missing = this.missing;
         v.printFormat = this.printFormat;
         v.writeFormat = this.writeFormat;
-        v.__nb_string_contin_recs = this.stringExt; // not awesome that this is needed
+
         v.__shortName = this.shortName;
+
+        // hacky (todo: clean this up)
+        v.__nb_string_contin_recs = this.stringExt;
+        v.__child_string_sysvars = [];
+        v.__is_child_string_var = false;
 
         return v;
 
