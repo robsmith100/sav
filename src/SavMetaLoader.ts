@@ -1,11 +1,12 @@
 import { DictionaryTerminationRecord } from "./records/DictionaryTerminationRecord.js";
 import { DocumentRecord } from "./records/DocumentRecord.js";
 import { HeaderRecord } from "./records/HeaderRecord.js";
-import { EncodingInfoRecord, InfoRecord, LongVarNameEntry, LongVarNamesInfoRecord, StringVarLengthEntry, SuperLongStringVarsRecord } from "./records/InfoRecord.js";
+import { bytesToString, EncodingInfoRecord, InfoRecord, LongStringValueLabelsRecord, LongVarNameEntry, LongVarNamesInfoRecord, StringVarLengthEntry, SuperLongStringVarsRecord } from "./records/InfoRecord.js";
 import { InfoRecordSubType, RecordType } from "./records/RecordType.js";
 import { ValueLabelRecord } from "./records/ValueLabelRecord.js";
 import { VariableRecord } from "./records/VariableRecord.js";
 import { SavMeta } from "./SavMeta.js";
+import { SysVarType } from "./SysVar.js";
 
 export class SavMetaLoader{
 
@@ -29,6 +30,7 @@ export class SavMetaLoader{
         let documentRecord: DocumentRecord;
         let longVariableNamesMap: LongVarNameEntry[];
         let longStringVarsMap: StringVarLengthEntry[] = null;
+        let valueLabelsExt: LongStringValueLabelsRecord = null;
         
         let done = false;
         do{
@@ -95,6 +97,9 @@ export class SavMetaLoader{
                 }
                 else if( rec.subType === InfoRecordSubType.SuperLongStringVariablesRecord){
                     longStringVarsMap = (rec as SuperLongStringVarsRecord).map;
+                }
+                else if( rec.subType === InfoRecordSubType.StringVariableValueLabelsRecord){
+                    valueLabelsExt = (rec as LongStringValueLabelsRecord);
                 }
             }
             else if( rec_type === RecordType.DictionaryTerminationRecord ){
@@ -168,14 +173,43 @@ export class SavMetaLoader{
 
         delete(meta.header.case_size); // deleting because the number of vrecs is less helpful that n_vars
 
-        // adjust valuelabels map to refer to new names
+        // append valuelabel sets from longer string vars if exists
+        if( valueLabelsExt?.sets ){
+            meta.valueLabels = [
+                ...(meta.valueLabels || []),
+                ...(valueLabelsExt.sets)
+            ]
+        }
+        
+        // adjust valuelabels map to refer to new names; also set proper entry values based on var type
         meta.valueLabels = meta.valueLabels.map(set => {
             var set2 = {...set};
-            set2.appliesToShortNames = set2.appliesToShortNames.map(
-                shortname => meta.sysvars.find(sysvar => sysvar.__shortName == shortname).name);
+            set2.appliesToNames = set2.appliesToNames // would already exist if set came from valueLabelsExt
+                || set2._appliesToShortNames.map(shortname => meta.sysvars.find(sysvar => sysvar.__shortName == shortname).name);
+
+            // find first var that this applies to, to determine whether type is string or number
+            const var1 = meta.sysvars.find(sysvar => sysvar.name === set2.appliesToNames[0]);
+            if( var1.type === SysVarType.string ){
+                // type is string, so vl entries should use string vals
+                set2.entries = set2.entries.map(entry => {
+                    return {
+                        val: entry._valBytes ? 
+                            bytesToString(entry._valBytes)?.trimEnd() 
+                            : entry.val, // note: if record came from LongStringValueLabelsRecord it will already have been converted to a string
+                        label: entry.label
+                    }
+                });
+            }
+            else if( var1.type === SysVarType.numeric ){
+                // type is numeric, so we can delete _valBytes
+                set2.entries.forEach(entry => {
+                    delete entry._valBytes;
+                });
+            }
+            delete set2._appliesToShortNames;
             return set2;
         });
-        
+
         return meta;
 
     }

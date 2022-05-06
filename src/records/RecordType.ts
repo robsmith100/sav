@@ -16,5 +16,9 @@ export enum InfoRecordSubType{
     AuxilliaryVariableParameter = 11,
     LongVariableNamesRecord = 13,
     SuperLongStringVariablesRecord = 14,
-    EncodingRecord = 20
+    // 16 - ???
+    // 18 - variable role?
+    EncodingRecord = 20,
+    StringVariableValueLabelsRecord = 21
+    // 22 - missing values for string vars?
 }

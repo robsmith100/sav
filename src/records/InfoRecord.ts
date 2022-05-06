@@ -1,9 +1,10 @@
 import { InfoRecordSubType } from "./RecordType.js";
+import { ValueLabelEntry, ValueLabelRecord } from "./ValueLabelRecord.js";
 
 /**
  * Should this offer an encoding?
  */
-function bytesToString(bytes) {
+export function bytesToString(bytes) {
     let str = "";
     for(let i = 0, n = bytes.length; i < n; i++) {
         str += String.fromCharCode(bytes[i])
@@ -27,7 +28,7 @@ export class InfoRecord{
         rec.subType = await reader.readInt32();
         rec.size = await reader.readInt32();
         rec.count = await reader.readInt32();
-        
+
         const byteData = await reader.readBytes(rec.size * rec.count);
 
         if( rec.subType === InfoRecordSubType.MachineInt32Info ){
@@ -179,10 +180,73 @@ export class InfoRecord{
             // UTF-32
             
         }
+        else if( rec.subType == InfoRecordSubType.StringVariableValueLabelsRecord ){
+
+            let vlrec: LongStringValueLabelsRecord = {
+                ...rec,
+                sets: []
+            }
+
+            // note: this was all reverse-engineered and I don't know if it's totally correct
+
+            let pos = 0;
+            while( pos < byteData.length ){
+
+                // read var name length
+                const var_name_len = getIntFromBuffer(byteData, pos);
+                pos += 4;
+
+                // read var name
+                // note: this appears to be the long variable name. 
+                // note: I don't know if could possibly be a comma-separated list of var names.
+                const var_name = getStringFromBuffer(byteData, pos, var_name_len);
+                pos += var_name_len;
+
+                // read var size (note: why is this needed?? it appears to simply match then "width" of the string var)
+                const var_size = getIntFromBuffer(byteData, pos);
+                pos += 4;
+
+                // read number of value labels
+                const nb_value_labels = getIntFromBuffer(byteData, pos);
+                pos += 4;
+
+                let vlset = {
+                    appliesToNames: [var_name],
+                    entries: []
+                };
+                vlrec.sets.push(vlset);
+                for( let i = 0; i < nb_value_labels; i++ ){
+
+                    const value_len = getIntFromBuffer(byteData, pos);
+                    pos += 4;
+
+                    const value = getStringFromBuffer(byteData, pos, value_len)
+                        .trimEnd();
+                    pos += value_len;
+
+                    const label_len = getIntFromBuffer(byteData, pos);
+                    pos += 4;
+
+                    const label = getStringFromBuffer(byteData, pos, label_len)
+                        .trimEnd();
+                    pos += label_len;
+
+                    vlset.entries.push({ val: value, label });
+                }
+            }
+            
+            return vlrec;
+
+        }
         else{
             
             // miscellaneous (unknown)
             // note: bytes were already read in
+
+            // console.log(`Unknown Info Record [${rec.subType}] at ${reader.getPosition()}`)
+            // console.log("byteData", byteData);
+            // const str = bytesToString(byteData);
+            // console.log("byteData", str);
             
             return rec;
 
@@ -215,7 +279,29 @@ export class SuperLongStringVarsRecord extends InfoRecord{
 
 }
 
+export class LongStringValueLabelsRecord extends InfoRecord{
+
+    sets: ValueLabelRecord[];
+
+}
+
+
+
 export class StringVarLengthEntry{
     name: string;
     length: number;
+}
+
+const getIntFromBuffer = (buf, pos) => 
+            (buf[pos + 0]) |
+            (buf[pos + 1] << 8) |
+            (buf[pos + 2] << 16) |
+            (buf[pos + 3] << 24);
+
+const getStringFromBuffer = (buf, pos, len) => {
+    let str = "";
+    for( let i = 0; i < len; i++ ){
+        str += String.fromCharCode(buf[pos + i]);
+    }
+    return str;
 }
