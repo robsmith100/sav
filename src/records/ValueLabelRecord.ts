@@ -1,21 +1,28 @@
 import { VariableRecord } from "./VariableRecord";
 
 export class ValueLabelEntry{
-    val: number;
+    val: number | string;
     label: string;
+    _valBytes?: any;
 }
 
 export class ValueLabelRecord{
 
     constructor() {
-        this.appliesToShortNames = [];
+        this._appliesToShortNames = [];
+        this.appliesToNames = null;
         this.entries = [];
     }
 
     /**
      * Array of shortNames that this record applies to
      */
-    appliesToShortNames: string[];
+    _appliesToShortNames?: string[];
+
+    /**
+     * Array of var names that this record applies to
+     */
+     appliesToNames?: string[];
 
     /**
      * Array of value/label entries
@@ -33,7 +40,10 @@ export class ValueLabelRecord{
         for( let i = 0; i < count; i++ ){
 
             // get value
-            const val = await reader.readDouble();
+            //const val = await reader.readDouble();
+            const _valBytes = await reader.readBytes(8);
+            const val = bytesToDouble(_valBytes);
+            
 
             // get label
             const labelLen = await reader.readByte();
@@ -45,6 +55,7 @@ export class ValueLabelRecord{
 
             set.entries.push({
                 val,
+                _valBytes,
                 label
             });
 
@@ -68,7 +79,7 @@ export class ValueLabelRecord{
 
                 // find variable
                 const vrec = vrecs[varIndex - 1];
-                set.appliesToShortNames.push(vrec.shortName);
+                set._appliesToShortNames.push(vrec.shortName);
 
             }
 
@@ -80,3 +91,23 @@ export class ValueLabelRecord{
 
 }
 
+const bytesToDouble = (buf): number => {
+
+    if (buf.length !== 8) throw Error("not enough bytes read for Double");
+    
+    var ab = new ArrayBuffer(8);
+    var bufView = new Uint8Array(ab);
+    bufView[0] = buf[7];
+    bufView[1] = buf[6];
+    bufView[2] = buf[5];
+    bufView[3] = buf[4];
+    bufView[4] = buf[3];
+    bufView[5] = buf[2];
+    bufView[6] = buf[1];
+    bufView[7] = buf[0];
+    let dv = new DataView(ab);
+    let d = dv.getFloat64(0);
+
+    return d;
+
+}

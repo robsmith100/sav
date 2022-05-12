@@ -18,7 +18,7 @@ export class SavMeta{
     firstRecordPosition: number;
 
     getValueLabels(varname){
-        var vl = this.valueLabels.find(vl => vl.appliesToShortNames.includes(varname));
+        var vl = this.valueLabels.find(vl => vl.appliesToNames.includes(varname));
         return ( vl != null ) ? vl.entries : null;
     }
 
