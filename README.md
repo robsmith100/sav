@@ -121,6 +121,13 @@ do{
     if( row != null ){
 
         // do something with the row
+        
+        
+        // note: SPSS doesn't really have a date var 'type'.
+        // Instead it stores date values as type 'numeric' but gives the var a different printFormat and/or writeFormat.
+        // To convert a returned value to a javascript Date, use DateHelper
+        var date1 = DateHelper.dateFromNumber(row["mydatevar"]);
+
 
     }
 } while( row != null );
