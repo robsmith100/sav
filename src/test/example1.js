@@ -7,10 +7,15 @@ const cc = {
     BgBlack: "\x1b[40m", BgRed: "\x1b[41m", BgGreen: "\x1b[42m", BgYellow: "\x1b[43m", BgBlue: "\x1b[44m", BgMagenta: "\x1b[45m", BgCyan: "\x1b[46m", BgWhite:"\x1b[47m",
 }
 
-const filename = "./test-data/generic dataset 6.sav";
+const filename =  process.argv[2] //|| "./test-data/generic dataset 6.sav";
+if (!filename) {
+    console.error("Specify filename")
+    console.error("Usage: node dist/test/example1.js <filename>")
+    console.error("Example: npm run example1 \"./test-data/generic dataset 6.sav\"")
+}
 
 async function test1() {
-    
+
     const sav = new SavFileReader(filename);
 
     await sav.open();
@@ -29,7 +34,7 @@ async function test1() {
         typestr += cc.FgCyan + ']';
 
         console.log(`${namestr} ${typestr} ${cc.Reset}${x.label}` );
-        
+
         // find and print value labels for this var if any
         let valueLabels = sav.meta.getValueLabels(x.name)
         if (valueLabels){
@@ -49,6 +54,7 @@ async function test1() {
         row = await sav.readNextRow();
 
         if( row != null ){
+            //console.log(JSON.stringify(row))
             if( sav.rowIndex % 1000 == 0 ){
                 console.log(sav.rowIndex, row['uuid']);
             }
@@ -62,7 +68,7 @@ async function test1() {
 
     console.log(cc.FgMagenta + 'Frequencies:' + cc.Reset)
     console.log(q1_frequencies);
-    
+
 
 }
 

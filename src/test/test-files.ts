@@ -1,9 +1,14 @@
+import * as fs from "fs";
 import { SavFileReader } from "..";
 import { SysVarType } from "../SysVar";
 import { cc, eq, computeDescriptives } from "./TestHelpers.js";
 
-const sampleFilesFolder: string = "C:\\Program Files\\IBM\\SPSS Statistics\\Samples\\English";
-
+let sampleFilesFolders = [
+    process.env.SAMPLE_FILES_FOLDER,
+    "C:\\Program Files\\IBM\\SPSS Statistics\\Samples\\English",
+    "/Applications/IBM SPSS Statistics/Resources/Samples/English/"
+]
+const sampleFilesFolder: string = sampleFilesFolders.find(path=>fs.existsSync(path))
 const tests = [
     {
         file: "accidents.sav",

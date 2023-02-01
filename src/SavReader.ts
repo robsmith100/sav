@@ -30,8 +30,9 @@ export class SavReader{
     async open() {
         
         // check file type
-        if (await this.reader.readString(4) != "$FL2") {
-            throw new Error("Not a valid .sav file");
+        let check = await this.reader.readString(4)
+        if (check != "$FL2" && check != '$FL3') {
+            throw new Error("Not a valid .sav file:"+ check);
         }
 
         // load metadata (variable names, # of cases (if specified), variable labels, value labels, etc.)
