@@ -29,10 +29,23 @@ export class SavReader{
      */
     async open() {
         
-        // check file type
-        let check = await this.reader.readString(4)
-        if (check != "$FL2" && check != '$FL3') {
-            throw new Error("Not a valid .sav file:"+ check);
+        // check file rec_type
+        // Record type code, either ‘$FL2’ for system files with uncompressed data or data
+        // compressed with simple bytecode compression, or ‘$FL3’ for system files with
+        // ZLIB compressed data.
+        // This is truly a character field that uses the character encoding as other strings.
+        // Thus, in a file with an ASCII-based character encoding this field contains 24 46
+        // 4c 32 or 24 46 4c 33, and in a file with an EBCDIC-based encoding this field
+        // contains 5b c6 d3 f2. (No EBCDIC-based ZLIB-compressed files have been
+        // observed.)
+        const rec_type = await this.reader.readString(4);
+
+        if (rec_type != "$FL2" && rec_type != '$FL3') {
+            throw new Error("Not a valid .sav file:"+ rec_type);
+        }
+
+        if (rec_type == '$FL3') {
+            throw new Error("ZLIB compressed data not supported");
         }
 
         // load metadata (variable names, # of cases (if specified), variable labels, value labels, etc.)

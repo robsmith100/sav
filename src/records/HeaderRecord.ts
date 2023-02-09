@@ -31,7 +31,9 @@ export class HeaderRecord{
     compressed: boolean;
 
     /**
-     * might be a weird redundant way to store bias. todo: simplify this
+     * Set to 0 if the data in the file is not compressed, 1 if the data is compressed with simple
+     * bytecode compression, 2 if the data is ZLIB compressed. This field has value 2 if and only
+     * if rec_type is ‘$FL3’.
      */
     compression: any;
 
