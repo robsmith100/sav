@@ -1,3 +1,4 @@
+import { MachineFloatInfoRecord, MachineIntegerInfoRecord } from "./records/InfoRecord.js";
 import { ValueLabelRecord } from "./records/ValueLabelRecord.js";
 import { SysVar } from "./SysVar.js";
 
@@ -16,6 +17,9 @@ export class SavMeta{
     sysvars: SysVar[];
     valueLabels: ValueLabelRecord[];
     firstRecordPosition: number;
+
+    integerInfo: MachineIntegerInfoRecord;
+    floatInfo: MachineFloatInfoRecord;
 
     getValueLabels(varname){
         var vl = this.valueLabels.find(vl => vl.appliesToNames.includes(varname));

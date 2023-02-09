@@ -1,3 +1,4 @@
+import { CompressionInfo, CompressionType } from "../records/HeaderRecord.js";
 import { IPeekableAsyncReader } from "./IPeekableAsyncReader.js";
 
 
@@ -107,95 +108,109 @@ export class CommandReader {
         return code;
     }
 
-    async readDouble2(compression): Promise<number>{
-        if (compression == null)
+    async readDouble2(compression: CompressionInfo): Promise<number>{
+
+        if( !compression || compression.type === CompressionType.None ){
             return await this.readDouble();
+        }
+        else if( compression.type === CompressionType.ByteCode ){
         
-        let code = await this.getCommandCode();
-        while (code === 0)
-            code = await this.getCommandCode(); // huh? padding or something?
-        
-        let d = null;
-
-        if (code > 0 && code < 252 ){
-            // compressed data
-            d = code - compression.bias;
-        }
-        else if (code === 252) {
-            // end of file
-        }
-        else if (code === 253) {
-            // non-compressible piece, read from stream
-            d = await this.readDouble(); // reads from end (since commands have already been read)
-        }
-        else if (code === 254) {
-            // string value that is all spaces
-
-            //d = 0x2020202020202020;
-
-            // shouldn't get here!
-            //d = null;
+            let code = await this.getCommandCode();
+            while (code === 0)
+                code = await this.getCommandCode(); // huh? padding or something?
             
-        }
-        else if (code === 255) {
-            // system-missing
-        }
-        else if (code === 0) {
-            // ignore
-        }
-        else if (code === null) {
-            // ignore    
-        }
-        else {
-            throw new Error('unknown error reading compressed double. code is ' + code);
-        }
+            let d = null;
 
-        return d;
+            if (code > 0 && code < 252 ){
+                // compressed data
+                d = code - compression.bias;
+            }
+            else if (code === 252) {
+                // end of file
+            }
+            else if (code === 253) {
+                // non-compressible piece, read from stream
+                d = await this.readDouble(); // reads from end (since commands have already been read)
+            }
+            else if (code === 254) {
+                // string value that is all spaces
+
+                //d = 0x2020202020202020;
+
+                // shouldn't get here!
+                //d = null;
+                
+            }
+            else if (code === 255) {
+                // system-missing
+            }
+            else if (code === 0) {
+                // ignore
+            }
+            else if (code === null) {
+                // ignore    
+            }
+            else {
+                throw new Error('unknown error reading compressed double. code is ' + code);
+            }
+
+            return d;
+
+        }
+        else{
+            throw new Error("Compression type not supported: " + compression.type);
+        }
 
     }
 
-    async read8CharString(compression): Promise<string>{
+    async read8CharString(compression: CompressionInfo): Promise<string>{
         
-        if (compression == null)
+        if (!compression || compression.type === CompressionType.None){
             return await this.readString(8);
-        
-        var code = await this.getCommandCode();
-        while (code === 0)
-            code = await this.getCommandCode();
+        }
+        else if( compression.type === CompressionType.ByteCode ){
 
-        let str: string = null;
+            var code = await this.getCommandCode();
+            while (code === 0)
+                code = await this.getCommandCode();
 
-        if (code > 0 && code < 252) {
-            // compressed data
-            //d = code - bias;
+            let str: string = null;
 
-            // shouldn't get here!
-        }
-        else if (code === 252) {
-            // end of file
-        }
-        else if (code === 253) {
-            // non-compressible piece, read from stream
-            str = await this.readString(8); // reads from end (since commands have already been read)
-        }
-        else if (code === 254) {
-            // string value that is all spaces
-            str = '        '; // todo: figure out if this should be empty (len=0)
-        }
-        else if (code === 255) {
-            // system-missing
-        }
-        else if (code === 0) {
-            // ignore
-        }
-        else if (code === null) {
-            // ignore
-        }
-        else {
-            throw new Error('unknown error reading compressed string');
-        }
+            if (code > 0 && code < 252) {
+                // compressed data
+                //d = code - bias;
 
-        return str;
+                // shouldn't get here!
+            }
+            else if (code === 252) {
+                // end of file
+            }
+            else if (code === 253) {
+                // non-compressible piece, read from stream
+                str = await this.readString(8); // reads from end (since commands have already been read)
+            }
+            else if (code === 254) {
+                // string value that is all spaces
+                str = '        '; // todo: figure out if this should be empty (len=0)
+            }
+            else if (code === 255) {
+                // system-missing
+            }
+            else if (code === 0) {
+                // ignore
+            }
+            else if (code === null) {
+                // ignore
+            }
+            else {
+                throw new Error('unknown error reading compressed string');
+            }
+
+            return str;
+        }
+        else{
+            throw new Error("Unsupported compression type: " + compression.type);
+        }
 
     }
     

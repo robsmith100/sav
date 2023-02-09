@@ -99,7 +99,7 @@ export class SavReader{
         for( let v of this.meta.sysvars ){
 
             if( v.type === SysVarType.numeric ){
-                const d = await this.reader.readDouble2(this.meta.header.compression);
+                const d = await this.reader.readDouble2(this.meta.header.compressionInfo);
                 if( includeNulls || isValid(d))
                     row[v.name] = d;
             }
@@ -113,11 +113,11 @@ export class SavReader{
                     let varStr = "";
                     
                     // read root
-                    varStr += await this.reader.read8CharString(this.meta.header.compression);
+                    varStr += await this.reader.read8CharString(this.meta.header.compressionInfo);
 
                     // read string continuations if any
                     for( var j = 0; j < sv.__nb_string_contin_recs; j++ ){
-                        varStr += await this.reader.read8CharString(this.meta.header.compression);
+                        varStr += await this.reader.read8CharString(this.meta.header.compressionInfo);
                     }
 
                     if( varStr.length > 255 ){

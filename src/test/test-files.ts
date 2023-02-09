@@ -338,15 +338,21 @@ const stopOnError = false;
 const run = async () => {
     let errors = 0;
 
+    //const tests1 = [tests[0]];
+
     for (let test of tests) {
 
         const filename = `${sampleFilesFolder}/${test.file}`;
-        console.log("file: " + test.file);
+        console.log(`file: ${cc.FgCyan}${test.file}${cc.Reset}`);
 
 
         // open the file
         const sav = new SavFileReader(filename);
         await sav.open();
+
+        console.log(`nbVars: ${cc.FgCyan}${sav.meta.sysvars.length}${cc.Reset}`);
+        console.log(`nbCases: ${cc.FgCyan}${sav.meta.header.n_cases}${cc.Reset}`);
+        
 
         // run meta checks
         if (test.meta_check) {
@@ -374,6 +380,7 @@ const run = async () => {
             
             console.log(`${cc.FgMagenta}reading data...${cc.Reset}`);
             const rowdata = await sav.readAllRows();
+            console.log(`rows.length: ${cc.FgCyan}${rowdata.length}${cc.Reset}`);
 
             // implicit check n_cases === rowdata.length
             const dchecks = [

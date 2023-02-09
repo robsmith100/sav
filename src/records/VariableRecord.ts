@@ -1,12 +1,23 @@
 import { DisplayFormat } from "../DisplayFormat.js";
 import { SysVar, SysVarType } from "../SysVar.js";
+import { AlignmentLevel, MeasurementLevel } from "./InfoRecord.js";
 
 /**
- * Immediately following the header must come the variable records. There must be one
- * variable record for every variable and every 8 characters in a long string beyond
- * the first 8; i.e., there must be exactly as many variable records as the value
- * specified for case_size in the file header record. 
+ * There must be one variable record for each numeric variable and each string variable with
+ * width 8 bytes or less. String variables wider than 8 bytes have one variable record for each 8
+ * bytes, rounding up. The first variable record for a long string specifies the variable’s correct
+ * dictionary information. Subsequent variable records for a long string are filled with dummy
+ * information: a type of -1, no variable label or missing values, print and write formats that
+ * are ignored, and an empty string as name. A few system files have been encountered that
+ * include a variable label on dummy variable records, so readers should take care to parse
+ * dummy variable records in the same way as other variable records.
  * 
+ * The dictionary index of a variable is a 1-based offset in the set of variable records,
+ * including dummy variable records for long string variables. The first variable record has a
+ * dictionary index of 1, the second has a dictionary index of 2, and so on.
+ * The system file format does not directly support string variables wider than 255 bytes.
+ * Such very long string variables are represented by a number of narrower string variables.
+ * See PSPP Section 1.12 [Very Long String Record], page 17, for details.
  */
 export class VariableRecord{
 
@@ -67,10 +78,14 @@ export class VariableRecord{
      */
     missing: any;
 
+
+    display: VarDisplay;
+
+
     /**
      * Indicates how many string extension records exist that apply to this record
      */
-    stringExt: number;
+    nStringExtensions: number;
 
     static async read(reader): Promise<VariableRecord> {
 
@@ -155,6 +170,7 @@ export class VariableRecord{
         // name
         // this may later be re-named by a longvarname entry
         v.name = this.shortName;
+        v.__shortName = this.shortName;
         
         // type
         if (this.type === 0) {
@@ -175,10 +191,12 @@ export class VariableRecord{
         v.printFormat = this.printFormat;
         v.writeFormat = this.writeFormat;
 
-        v.__shortName = this.shortName;
+        
+
+        v.display = this.display;
 
         // hacky (todo: clean this up)
-        v.__nb_string_contin_recs = this.stringExt;
+        v.__nb_string_contin_recs = this.nStringExtensions;
         v.__child_string_sysvars = [];
         v.__is_child_string_var = false;
 
@@ -190,3 +208,8 @@ export class VariableRecord{
 
 }
 
+export class VarDisplay{
+    columns: number;
+    alignment: AlignmentLevel;
+    measure: MeasurementLevel;
+}

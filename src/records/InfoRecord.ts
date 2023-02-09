@@ -1,5 +1,7 @@
+import { SavMeta } from "../SavMeta.js";
 import { InfoRecordSubType } from "./RecordType.js";
-import { ValueLabelEntry, ValueLabelRecord } from "./ValueLabelRecord.js";
+import { bytesToInt32, ValueLabelEntry, ValueLabelRecord } from "./ValueLabelRecord.js";
+import { VarDisplay, VariableRecord } from "./VariableRecord.js";
 
 /**
  * Should this offer an encoding?
@@ -21,22 +23,70 @@ export class InfoRecord{
 
     count: number;
 
-    static async read(reader): Promise<InfoRecord>{
+    static async read(reader, vRecs: VariableRecord[], meta: SavMeta): Promise<InfoRecord>{
 
         let rec = new InfoRecord();
         
+        // Subtype (there are a bunch of different subtypes. See below)
         rec.subType = await reader.readInt32();
+
+        // Size of each piece of data, in bytes.
         rec.size = await reader.readInt32();
+
+        // Number of pieces of data.
         rec.count = await reader.readInt32();
 
+        // Read the data
         const byteData = await reader.readBytes(rec.size * rec.count);
 
         if( rec.subType === InfoRecordSubType.MachineInt32Info ){
+            
             // describes how int32s are stored as binary
-            return rec;
+            
+            const bytes = Uint8Array.from(byteData);
+            let i = 0;
+            
+            // int32 version_major;
+            const version_major = bytesToInt32(bytes, i); i += 4;
+
+            // int32 version_minor;
+            const version_minor = bytesToInt32(bytes, i); i += 4;
+
+            // int32 version_revision;
+            const version_revision = bytesToInt32(bytes, i); i += 4;
+
+            // int32 machine_code;
+            const machine_code = bytesToInt32(bytes, i); i += 4;
+
+            // int32 floating_point_rep;
+            const floating_point_rep = bytesToInt32(bytes, i); i += 4;
+
+            // int32 compression_code;
+            const compression_code = bytesToInt32(bytes, i); i += 4;
+
+            // int32 endianness;
+            const endianness = bytesToInt32(bytes, i); i += 4;
+
+            // int32 character_code;
+            const character_code = bytesToInt32(bytes, i); i += 4;
+
+            const iiRec: MachineIntegerInfoRecord = {
+                ...rec,
+                version_major,
+                version_minor,
+                version_revision,
+                machine_code,
+                floating_point_rep,
+                compression_code,
+                endianness,
+                character_code
+            };
+            return iiRec;
+
         }
         else if( rec.subType === InfoRecordSubType.MachineFlt64Info ){
             // describes how flt64s are stored as binary
+            // todo
             return rec;
         }
         else if( rec.subType === InfoRecordSubType.MultipleResponseSets ){
@@ -67,8 +117,45 @@ export class InfoRecord{
         else if( rec.subType === InfoRecordSubType.AuxilliaryVariableParameter ){
             
             // auxilliary variable parameter (one per system file)
+            // a.k.a. Variable Display Parameter Record
 
-            // todo: this describes measurement, width, alignment for vars
+            // This describes measurement, width (columns), alignment for vars
+            
+            // FROM PSPP: The remaining members are repeated count times, in the same order as the variable
+            // records. No element corresponds to variable records that continue long string variables.
+            
+            // get the subset of vRecs that excludes string continuation vars
+            const bytes = Uint8Array.from(byteData);
+            const coreVRecs = vRecs.filter(r => r.type !== -1); // exclude string continuation vars
+
+            let i = 0;
+            for(let vRec of coreVRecs){
+
+                vRec.display = new VarDisplay();
+                
+                // int32 measure
+                // The measurement level of the variable:
+                // 0 Unknown
+                // 1 Nominal
+                // 2 Ordinal
+                // 3 Scale
+                vRec.display.measure = bytesToInt32(bytes, i);
+                i += 4;
+
+                // int32 width ("Columns" in spss)
+                // The width of the display column for the variable in characters.
+                // This field is present if count is 3 times the number of non-string-contin variables in the dictionary.
+                // It is omitted if count is 2 times the number of non-string-contin variables.
+                if( rec.count === coreVRecs.length * 3 ){
+                    vRec.display.columns = bytesToInt32(bytes, i);
+                    i += 4;
+                }
+
+                // int32 alignment
+                vRec.display.alignment = bytesToInt32(bytes, i);
+                i += 4;
+
+            }
 
             return rec;
         }
@@ -267,6 +354,71 @@ export class LongVarNameEntry{
     longName: string;
 }
 
+export class MachineIntegerInfoRecord extends InfoRecord{
+
+    /**
+     * PSPP major version number. In version x.y.z, this is x.
+     */
+    version_major: number; // int32
+
+    /**
+     * PSPP minor version number. In version x.y.z, this is y.
+     */
+    version_minor: number; // int32
+
+    /**
+     * PSPP version revision number. In version x.y.z, this is z.
+     */
+    version_revision: number; // int32
+
+    /**
+     * Machine code. PSPP always set this field to value to -1, but other values may appear.
+     */
+    machine_code: number; // int32
+    
+    /**
+     * Floating point representation code. For IEEE 754 systems this is 1. IBM 370 sets this to 2, and DEC VAX E to 3.
+     */
+    floating_point_rep: number; // int32
+    
+    /**
+     * Compression code. Always set to 1, regardless of whether or how the file is compressed.
+     */
+    compression_code: number; // int32
+
+    /**
+     * Machine endianness. 1 indicates big-endian, 2 indicates little-endian.
+     */
+    endianness: number; // int32
+
+    /**
+     * Character code. The following values have been actually observed in system
+     * files:
+     * 1        EBCDIC.
+     * 2        7-bit ASCII.
+     * 1250     The windows-1250 code page for Central European and Eastern European languages.
+     * 1252     The windows-1252 code page for Western European languages.
+     * 28591    ISO 8859-1.
+     * 65001    UTF-8.
+     * 
+     * The following additional values are known to be defined:
+     * 3        8-bit “ASCII”.
+     * 4        DEC Kanji.
+     * Other Windows code page numbers are known to be generally valid.
+     * 
+     * Old versions of SPSS for Unix and Windows always wrote value 2 in this field,
+     * regardless of the encoding in use. Newer versions also write the character
+     * encoding as a string (see PSPP docs Section 1.13 [Character Encoding Record], page 18).
+     */
+    character_code: number; // int32
+
+}
+
+export class MachineFloatInfoRecord extends InfoRecord{
+    
+}
+
+
 export class LongVarNamesInfoRecord extends InfoRecord{
     
     longNameMap: LongVarNameEntry[];
@@ -304,4 +456,17 @@ const getStringFromBuffer = (buf, pos, len) => {
         str += String.fromCharCode(buf[pos + i]);
     }
     return str;
+}
+
+export enum MeasurementLevel{
+    Unknown = 0,
+    Nominal = 1,
+    Ordinal = 2,
+    Scale = 3,
+}
+
+export enum AlignmentLevel{
+    Left = 0,
+    Right = 1,
+    Center = 2
 }

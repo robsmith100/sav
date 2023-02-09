@@ -1,7 +1,7 @@
 import { DictionaryTerminationRecord } from "./records/DictionaryTerminationRecord.js";
 import { DocumentRecord } from "./records/DocumentRecord.js";
 import { HeaderRecord } from "./records/HeaderRecord.js";
-import { bytesToString, EncodingInfoRecord, InfoRecord, LongStringValueLabelsRecord, LongVarNameEntry, LongVarNamesInfoRecord, StringVarLengthEntry, SuperLongStringVarsRecord } from "./records/InfoRecord.js";
+import { bytesToString, EncodingInfoRecord, InfoRecord, LongStringValueLabelsRecord, LongVarNameEntry, LongVarNamesInfoRecord, MachineFloatInfoRecord, MachineIntegerInfoRecord, StringVarLengthEntry, SuperLongStringVarsRecord } from "./records/InfoRecord.js";
 import { InfoRecordSubType, RecordType } from "./records/RecordType.js";
 import { ValueLabelRecord } from "./records/ValueLabelRecord.js";
 import { VariableRecord } from "./records/VariableRecord.js";
@@ -24,9 +24,9 @@ export class SavMetaLoader{
         // read the header record
         meta.header = await HeaderRecord.read(reader);
 
-        // keep most recent string for easy linking of string continuation vars
-        let vrecs: VariableRecord[] = [];
-        let recent_string_vrec: VariableRecord = null; 
+        
+        let vRecs: VariableRecord[] = [];
+        let recentStringRec: VariableRecord = null; // keep most recent string for easy linking of string continuation vars
         let documentRecord: DocumentRecord;
         let longVariableNamesMap: LongVarNameEntry[];
         let longStringVarsMap: StringVarLengthEntry[] = null;
@@ -38,32 +38,42 @@ export class SavMetaLoader{
             const rec_type = await reader.peekInt();
 
             if( rec_type === RecordType.VariableRecord ){
-                
-                await reader.readInt32(); // consume peeked record type
 
+                // There must be one variable record for each numeric variable and each string variable with
+                // width 8 bytes or less. String variables wider than 8 bytes have one variable record for each 8
+                // bytes, rounding up.
+                // see VariableRecord.ts for more info
+                
+                // consume peeked record type
+                await reader.readInt32(); // (always 2 for variable record)
+
+                // read variable record
                 const vrec = await VariableRecord.read(reader);
 
                 if( vrec.type > 0 ){
                     // (root string var) a vrec type of > 0 means string variable with length(type)
-                    vrec.stringExt = 0;
-                    recent_string_vrec = vrec;
+                    vrec.nStringExtensions = 0;
+                    recentStringRec = vrec;
                 }
                 else if( vrec.type === -1 ){
                     // a vrec type of -1 means string continuation variable
-                    recent_string_vrec.stringExt++;
+                    recentStringRec.nStringExtensions++;
                 }
                 else if( vrec.type === 0 ){
                     // a vrec type of 0 means numeric variable
                 }
-                vrecs.push(vrec);
+                vRecs.push(vrec);
                 
             }
             else if( rec_type === RecordType.ValueLabelRecord ){
                 
-                await reader.readInt32(); // consume peeked record type
+                // consume peeked record type
+                await reader.readInt32(); // (always set to 3 for value label record)
 
-                // a value label record contains one set of value/label pairs and is attached to one or more variables
-                const set = await ValueLabelRecord.read(reader, vrecs); // TODO: make sure these guys are matched app (see appliesTo aka appliesToShortName)
+                // A value label record contains one set of value/label pairs and is attached to one or more variables.
+                // See ValueLabelRecord.ts for more detail.
+
+                const set = await ValueLabelRecord.read(reader, vRecs); // TODO: make sure these guys are matched app (see appliesTo aka appliesToShortName)
                 if( set != null ){
                     meta.valueLabels.push(set);
                 }
@@ -71,8 +81,9 @@ export class SavMetaLoader{
             }
             else if( rec_type === RecordType.DocumentRecord ){
                 
-                await reader.readInt32(); // consume peeked record type
-                    
+                // consume peeked record type
+                await reader.readInt32(); // (always 6 for document record)
+
                 // there should be only one document record per file
                 if( documentRecord != null ){
                     throw new Error("Multiple document records encountered");
@@ -82,10 +93,12 @@ export class SavMetaLoader{
             }
             else if( rec_type === RecordType.InfoRecord ){
                 
-                await reader.readInt32(); // consume peeked record type
+                // consume peeked record type
+                await reader.readInt32(); // always 7 for info record
 
                 // info record has many different subtypes
-                const rec = await InfoRecord.read(reader);
+                // meta might not be needed, so maybe i can remove it. i'm working on endianness and that's why i added it, but now i realize i might not use endianness when reading meta.
+                const rec = await InfoRecord.read(reader, vRecs, meta);
 
                 if( rec.subType === InfoRecordSubType.EncodingRecord){
                     // grab encoding from it
@@ -100,6 +113,12 @@ export class SavMetaLoader{
                 }
                 else if( rec.subType === InfoRecordSubType.StringVariableValueLabelsRecord){
                     valueLabelsExt = (rec as LongStringValueLabelsRecord);
+                }
+                else if( rec.subType == InfoRecordSubType.MachineInt32Info){
+                    meta.integerInfo = (rec as MachineIntegerInfoRecord);
+                }
+                else if( rec.subType == InfoRecordSubType.MachineFlt64Info){
+                    meta.floatInfo = (rec as MachineFloatInfoRecord);
                 }
             }
             else if( rec_type === RecordType.DictionaryTerminationRecord ){
@@ -122,7 +141,7 @@ export class SavMetaLoader{
 
         // post-process the vrecs into sysvars
         meta.sysvars =
-            vrecs
+            vRecs
             .map(vrec => vrec.toSysVar())
             .filter(vrec => vrec) // filter out nulls because some vrecs (string continuation vrecs) can't be converted to sysvars
 
@@ -153,7 +172,7 @@ export class SavMetaLoader{
         
         // lookup weight (important to do this before assigning long var names)
         if (meta.header.weightIndex) {
-            const weight_vrec = vrecs[meta.header.weightIndex - 1];
+            const weight_vrec = vRecs[meta.header.weightIndex - 1];
             const weight_shortName = weight_vrec.shortName;
             meta.header.weight = meta.sysvars.find(sysvar => sysvar.name === weight_shortName);
         }
@@ -188,24 +207,25 @@ export class SavMetaLoader{
                 || set2._appliesToShortNames.map(shortname => meta.sysvars.find(sysvar => sysvar.__shortName == shortname).name);
 
             // find first var that this applies to, to determine whether type is string or number
-            const var1 = meta.sysvars.find(sysvar => sysvar.name === set2.appliesToNames[0]);
-            if( var1.type === SysVarType.string ){
-                // type is string, so vl entries should use string vals
-                set2.entries = set2.entries.map(entry => {
-                    return {
-                        val: entry._valBytes ? 
-                            bytesToString(entry._valBytes)?.trimEnd() 
-                            : entry.val, // note: if record came from LongStringValueLabelsRecord it will already have been converted to a string
-                        label: entry.label
-                    }
-                });
-            }
-            else if( var1.type === SysVarType.numeric ){
-                // type is numeric, so we can delete _valBytes
-                set2.entries.forEach(entry => {
-                    delete entry._valBytes;
-                });
-            }
+            // NOT NEEDED NOW THAT THIS HAPPENS IN VALUELABELRECORD
+            // const var1 = meta.sysvars.find(sysvar => sysvar.name === set2.appliesToNames[0]);
+            // if( var1.type === SysVarType.string ){
+            //     // type is string, so vl entries should use string vals
+            //     set2.entries = set2.entries.map(entry => {
+            //         return {
+            //             val: entry._valBytes ? 
+            //                 bytesToString(entry._valBytes)?.trimEnd() 
+            //                 : entry.val, // note: if record came from LongStringValueLabelsRecord it will already have been converted to a string
+            //             label: entry.label
+            //         }
+            //     });
+            // }
+            // else if( var1.type === SysVarType.numeric ){
+            //     // type is numeric, so we can delete _valBytes
+            //     set2.entries.forEach(entry => {
+            //         delete entry._valBytes;
+            //     });
+            // }
             delete set2._appliesToShortNames;
             return set2;
         });

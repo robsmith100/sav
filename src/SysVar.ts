@@ -1,4 +1,5 @@
 import { DisplayFormat } from "./DisplayFormat.js";
+import { VarDisplay } from "./records/VariableRecord.js";
 
 export const enum SysVarType{
     numeric,
@@ -12,6 +13,8 @@ export class SysVar{
     printFormat: DisplayFormat;
 
     writeFormat: DisplayFormat;
+
+    display: VarDisplay;
 
     name: string;
 
